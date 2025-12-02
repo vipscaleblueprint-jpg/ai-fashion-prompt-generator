@@ -1,8 +1,19 @@
 import { Link, NavLink } from "react-router-dom";
-import { Camera } from "lucide-react";
+import { Camera, Menu } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const navLink = ({ to, label }: { to: string; label: string }) => (
     <NavLink
       to={to}
@@ -18,6 +29,32 @@ export default function Header() {
       {label}
     </NavLink>
   );
+
+  const mobileNavLink = ({ to, label }: { to: string; label: string }) => (
+    <NavLink
+      to={to}
+      onClick={() => setMobileMenuOpen(false)}
+      className={({ isActive }) =>
+        cn(
+          "block px-4 py-3 text-base font-medium rounded-md transition-colors",
+          isActive
+            ? "text-primary bg-accent"
+            : "text-foreground/80 hover:text-foreground hover:bg-accent",
+        )
+      }
+    >
+      {label}
+    </NavLink>
+  );
+
+  const navItems = [
+    { to: "/", label: "Image to Prompt" },
+    { to: "/scene-to-prompt", label: "Scene to Prompt" },
+    { to: "/broll-to-prompt", label: "B-Roll to Prompt" },
+    { to: "/how-it-works", label: "How It Works" },
+    { to: "/about", label: "About" },
+    { to: "/history", label: "History" },
+  ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -36,13 +73,28 @@ export default function Header() {
           </div>
         </Link>
         <nav className="hidden md:flex items-center gap-1">
-          {navLink({ to: "/", label: "Image to Prompt" })}
-          {navLink({ to: "/scene-to-prompt", label: "Scene to Prompt" })}
-          {navLink({ to: "/broll-to-prompt", label: "B-Roll to Prompt" })}
-          {navLink({ to: "/how-it-works", label: "How It Works" })}
-          {navLink({ to: "/about", label: "About" })}
-          {navLink({ to: "/history", label: "History" })}
+          {navItems.map((item) => navLink(item))}
         </nav>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetHeader>
+              <SheetTitle>Navigation</SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col gap-2 mt-6">
+              {navItems.map((item) => mobileNavLink(item))}
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
