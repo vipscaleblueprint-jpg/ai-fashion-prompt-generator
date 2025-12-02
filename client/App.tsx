@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SceneToPrompt from "./pages/SceneToPrompt";
+import BrollToPrompt from "./pages/BrollToPrompt";
 import NotFound from "./pages/NotFound";
 import HowItWorks from "./pages/HowItWorks";
 import About from "./pages/About";
@@ -32,6 +33,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/scene-to-prompt" element={<SceneToPrompt />} />
+              <Route path="/broll-to-prompt" element={<BrollToPrompt />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<Privacy />} />

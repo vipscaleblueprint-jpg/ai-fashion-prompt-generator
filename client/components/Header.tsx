@@ -38,6 +38,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-1">
           {navLink({ to: "/", label: "Image to Prompt" })}
           {navLink({ to: "/scene-to-prompt", label: "Scene to Prompt" })}
+          {navLink({ to: "/broll-to-prompt", label: "B-Roll to Prompt" })}
           {navLink({ to: "/how-it-works", label: "How It Works" })}
           {navLink({ to: "/about", label: "About" })}
           {navLink({ to: "/history", label: "History" })}

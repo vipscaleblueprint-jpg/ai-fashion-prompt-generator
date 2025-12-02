@@ -1,14 +1,14 @@
 import { RequestHandler } from "express";
 import { Readable } from "stream";
 
-const DEFAULT_SCENE_WEBHOOK_URL =
-  "https://n8n.srv931715.hstgr.cloud/webhook/scenetoprompt";
+const DEFAULT_BROLL_WEBHOOK_URL =
+  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts";
 
-export const handleProxySceneWebhook: RequestHandler = (req, res) => {
+export const handleProxyBrollWebhook: RequestHandler = (req, res) => {
   const webhook =
-    process.env.VITE_SCENE_WEBHOOK_URL || process.env.SCENE_WEBHOOK_URL || DEFAULT_SCENE_WEBHOOK_URL;
+    process.env.VITE_BROLL_WEBHOOK_URL || process.env.BROLL_WEBHOOK_URL || DEFAULT_BROLL_WEBHOOK_URL;
   if (!webhook) {
-    return res.status(500).json({ error: "Scene webhook not configured on server." });
+    return res.status(500).json({ error: "B-roll webhook not configured on server." });
   }
 
   // Forward the incoming request body (stream) to the configured webhook.
@@ -42,11 +42,10 @@ export const handleProxySceneWebhook: RequestHandler = (req, res) => {
       }
     })
     .catch((err) => {
-      console.error("Scene proxy error:", err);
+      console.error("B-roll proxy error:", err);
       res
         .status(502)
-        .json({ error: "Scene proxy request failed", message: String(err) });
+        .json({ error: "B-roll proxy request failed", message: String(err) });
     });
 };
-
 
