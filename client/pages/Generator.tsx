@@ -21,8 +21,17 @@ export default function Generator() {
   // Advanced Settings State
   const [ethnicity, setEthnicity] = useState("");
   const [skinColor, setSkinColor] = useState("");
+  const [hairColor, setHairColor] = useState("");
   const [facialExpression, setFacialExpression] = useState("");
+  const [bodyComposition, setBodyComposition] = useState("");
   const [imperfection, setImperfection] = useState("");
+  // Facial Structure
+  const [exactFacialStructure, setExactFacialStructure] = useState(false);
+  const [eyes, setEyes] = useState("");
+  const [eyebrows, setEyebrows] = useState("");
+  const [nose, setNose] = useState("");
+  const [mouth, setMouth] = useState("");
+  const [ears, setEars] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -76,8 +85,16 @@ export default function Generator() {
         signal: controller.signal,
         ethnicity,
         skinColor,
+        hairColor,
         facialExpression,
+        bodyComposition,
         imperfection,
+        exactFacialStructure,
+        eyes,
+        eyebrows,
+        nose,
+        mouth,
+        ears,
       });
       // Only use the first prompt (1 variation)
       const singlePrompt = out.length > 0 ? [out[0]] : [];
@@ -135,10 +152,26 @@ export default function Generator() {
             setEthnicity={setEthnicity}
             skinColor={skinColor}
             setSkinColor={setSkinColor}
+            hairColor={hairColor}
+            setHairColor={setHairColor}
             facialExpression={facialExpression}
             setFacialExpression={setFacialExpression}
+            bodyComposition={bodyComposition}
+            setBodyComposition={setBodyComposition}
             imperfection={imperfection}
             setImperfection={setImperfection}
+            exactFacialStructure={exactFacialStructure}
+            setExactFacialStructure={setExactFacialStructure}
+            eyes={eyes}
+            setEyes={setEyes}
+            eyebrows={eyebrows}
+            setEyebrows={setEyebrows}
+            nose={nose}
+            setNose={setNose}
+            mouth={mouth}
+            setMouth={setMouth}
+            ears={ears}
+            setEars={setEars}
           />
 
           {!prompts && (

@@ -39,8 +39,16 @@ export async function handleBrollImageSubmission(
     signal?: AbortSignal;
     ethnicity?: string;
     skinColor?: string;
+    hairColor?: string;
     facialExpression?: string;
+    bodyComposition?: string;
     imperfection?: string;
+    exactFacialStructure?: boolean;
+    eyes?: string;
+    eyebrows?: string;
+    nose?: string;
+    mouth?: string;
+    ears?: string;
   },
 ): Promise<string[]> {
   // BROLL_WEBHOOK_URL is always set via env or default
@@ -49,8 +57,16 @@ export async function handleBrollImageSubmission(
   formData.append("data", imageFile); // Using same field name as webhook expects
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
   if (opts?.skinColor) formData.append("skinColor", opts.skinColor);
+  if (opts?.hairColor) formData.append("hairColor", opts.hairColor);
   if (opts?.facialExpression) formData.append("facialExpression", opts.facialExpression);
+  if (opts?.bodyComposition) formData.append("bodyComposition", opts.bodyComposition);
   if (opts?.imperfection) formData.append("imperfection", opts.imperfection);
+  if (opts?.exactFacialStructure) formData.append("exactFacialStructure", String(opts.exactFacialStructure));
+  if (opts?.eyes) formData.append("eyes", opts.eyes);
+  if (opts?.eyebrows) formData.append("eyebrows", opts.eyebrows);
+  if (opts?.nose) formData.append("nose", opts.nose);
+  if (opts?.mouth) formData.append("mouth", opts.mouth);
+  if (opts?.ears) formData.append("ears", opts.ears);
 
   // Try direct POST first (may fail due to CORS)
   try {
