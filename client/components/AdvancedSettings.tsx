@@ -112,6 +112,8 @@ const ETHNICITIES = [
 export interface AdvancedSettingsProps {
     ethnicity: string;
     setEthnicity: (value: string) => void;
+    gender: string;
+    setGender: (value: string) => void;
     skinColor: string;
     setSkinColor: (value: string) => void;
     hairColor: string;
@@ -140,6 +142,8 @@ export interface AdvancedSettingsProps {
 export default function AdvancedSettings({
     ethnicity,
     setEthnicity,
+    gender,
+    setGender,
     skinColor,
     setSkinColor,
     hairColor,
@@ -254,6 +258,19 @@ export default function AdvancedSettings({
                                         Selected: {ethnicity || selectedEthnicities.join(", ")}
                                     </p>
                                 )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="gender">Gender</Label>
+                                <Select value={gender} onValueChange={setGender}>
+                                    <SelectTrigger id="gender">
+                                        <SelectValue placeholder="Select Gender" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="male">Male</SelectItem>
+                                        <SelectItem value="female">Female</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="space-y-2">

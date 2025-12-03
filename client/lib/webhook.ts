@@ -38,6 +38,7 @@ export async function handleImageSubmission(
   opts?: {
     signal?: AbortSignal;
     ethnicity?: string;
+    gender?: string;
     skinColor?: string;
     hairColor?: string;
     facialExpression?: string;
@@ -56,6 +57,7 @@ export async function handleImageSubmission(
   const formData = new FormData();
   formData.append("Base_Image", imageFile);
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
+  if (opts?.gender) formData.append("gender", opts.gender);
   if (opts?.skinColor) formData.append("skinColor", opts.skinColor);
   if (opts?.hairColor) formData.append("hairColor", opts.hairColor);
   if (opts?.facialExpression) formData.append("facialExpression", opts.facialExpression);

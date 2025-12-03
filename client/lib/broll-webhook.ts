@@ -38,6 +38,7 @@ export async function handleBrollImageSubmission(
   opts?: {
     signal?: AbortSignal;
     ethnicity?: string;
+    gender?: string;
     skinColor?: string;
     hairColor?: string;
     facialExpression?: string;
@@ -56,6 +57,7 @@ export async function handleBrollImageSubmission(
   const formData = new FormData();
   formData.append("data", imageFile); // Using same field name as webhook expects
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
+  if (opts?.gender) formData.append("gender", opts.gender);
   if (opts?.skinColor) formData.append("skinColor", opts.skinColor);
   if (opts?.hairColor) formData.append("hairColor", opts.hairColor);
   if (opts?.facialExpression) formData.append("facialExpression", opts.facialExpression);

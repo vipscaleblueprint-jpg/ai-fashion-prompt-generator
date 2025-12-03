@@ -19,6 +19,7 @@ export default function BrollToPrompt() {
 
   // Advanced Settings State
   const [ethnicity, setEthnicity] = useState("");
+  const [gender, setGender] = useState("");
   const [skinColor, setSkinColor] = useState("");
   const [hairColor, setHairColor] = useState("");
   const [facialExpression, setFacialExpression] = useState("");
@@ -82,6 +83,7 @@ export default function BrollToPrompt() {
       const out = await handleBrollImageSubmission(file, {
         signal: controller.signal,
         ethnicity,
+        gender,
         skinColor,
         hairColor,
         facialExpression,
@@ -148,6 +150,8 @@ export default function BrollToPrompt() {
           <AdvancedSettings
             ethnicity={ethnicity}
             setEthnicity={setEthnicity}
+            gender={gender}
+            setGender={setGender}
             skinColor={skinColor}
             setSkinColor={setSkinColor}
             hairColor={hairColor}
