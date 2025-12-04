@@ -33,6 +33,9 @@ export default function Generator() {
   const [nose, setNose] = useState("");
   const [mouth, setMouth] = useState("");
   const [ears, setEars] = useState("");
+  // Transform Head
+  const [transformHead, setTransformHead] = useState(false);
+  const [angle, setAngle] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -97,6 +100,8 @@ export default function Generator() {
         nose,
         mouth,
         ears,
+        transformHead,
+        angle,
       });
       // Only use the first prompt (1 variation)
       const singlePrompt = out.length > 0 ? [out[0]] : [];
@@ -176,6 +181,10 @@ export default function Generator() {
             setMouth={setMouth}
             ears={ears}
             setEars={setEars}
+            transformHead={transformHead}
+            setTransformHead={setTransformHead}
+            angle={angle}
+            setAngle={setAngle}
           />
 
           {!prompts && (

@@ -33,6 +33,9 @@ export default function SceneToPrompt() {
   const [nose, setNose] = useState("");
   const [mouth, setMouth] = useState("");
   const [ears, setEars] = useState("");
+  // Transform Head
+  const [transformHead, setTransformHead] = useState(false);
+  const [angle, setAngle] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -97,6 +100,8 @@ export default function SceneToPrompt() {
         nose,
         mouth,
         ears,
+        transformHead,
+        angle,
       });
       // Only use the first prompt (1 variation)
       const singlePrompt = out.length > 0 ? [out[0]] : [];
@@ -131,7 +136,7 @@ export default function SceneToPrompt() {
       <section className="mb-10">
         <div className="max-w-3xl space-y-3">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            AI Scene to Prompt Generator
+            AI Scene Image to Prompt Generator
           </h1>
           <p className="text-foreground/80 text-lg">
             Transform your scene images into professional photography prompts
@@ -176,6 +181,10 @@ export default function SceneToPrompt() {
             setMouth={setMouth}
             ears={ears}
             setEars={setEars}
+            transformHead={transformHead}
+            setTransformHead={setTransformHead}
+            angle={angle}
+            setAngle={setAngle}
           />
 
           {!prompts && (

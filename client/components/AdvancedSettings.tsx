@@ -137,6 +137,11 @@ export interface AdvancedSettingsProps {
     setMouth: (value: string) => void;
     ears: string;
     setEars: (value: string) => void;
+    // Transform Head
+    transformHead: boolean;
+    setTransformHead: (value: boolean) => void;
+    angle: string;
+    setAngle: (value: string) => void;
 }
 
 export default function AdvancedSettings({
@@ -166,6 +171,10 @@ export default function AdvancedSettings({
     setMouth,
     ears,
     setEars,
+    transformHead,
+    setTransformHead,
+    angle,
+    setAngle,
 }: AdvancedSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
@@ -400,6 +409,45 @@ export default function AdvancedSettings({
                                         />
                                     </div>
                                 </>
+                            )}
+
+                            <div className="space-y-2 sm:col-span-2">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="transformHead"
+                                        checked={transformHead}
+                                        onCheckedChange={(checked) => setTransformHead(checked === true)}
+                                    />
+                                    <Label
+                                        htmlFor="transformHead"
+                                        className="text-base font-medium cursor-pointer"
+                                    >
+                                        Enable Transform Head
+                                    </Label>
+                                </div>
+                            </div>
+
+                            {transformHead && (
+                                <div className="space-y-2 sm:col-span-2">
+                                    <Label htmlFor="angle">Angle</Label>
+                                    <Select value={angle} onValueChange={setAngle} disabled={!transformHead}>
+                                        <SelectTrigger id="angle">
+                                            <SelectValue placeholder="Select Angle" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="close-up">Close Up</SelectItem>
+                                            <SelectItem value="medium-shot">Medium Shot</SelectItem>
+                                            <SelectItem value="wide-shot">Wide Shot</SelectItem>
+                                            <SelectItem value="extreme-close-up">Extreme Close Up</SelectItem>
+                                            <SelectItem value="full-body">Full Body</SelectItem>
+                                            <SelectItem value="three-quarter">Three Quarter</SelectItem>
+                                            <SelectItem value="profile">Profile</SelectItem>
+                                            <SelectItem value="overhead">Overhead</SelectItem>
+                                            <SelectItem value="low-angle">Low Angle</SelectItem>
+                                            <SelectItem value="high-angle">High Angle</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             )}
 
                             <div className="space-y-2 sm:col-span-2">

@@ -50,6 +50,8 @@ export async function handleSceneImageSubmission(
     nose?: string;
     mouth?: string;
     ears?: string;
+    transformHead?: boolean;
+    angle?: string;
   },
 ): Promise<string[]> {
   // SCENE_WEBHOOK_URL is always set via env or default
@@ -69,6 +71,8 @@ export async function handleSceneImageSubmission(
   if (opts?.nose) formData.append("nose", opts.nose);
   if (opts?.mouth) formData.append("mouth", opts.mouth);
   if (opts?.ears) formData.append("ears", opts.ears);
+  if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
+  if (opts?.angle) formData.append("angle", opts.angle);
 
   // Try direct POST first (may fail due to CORS)
   try {
