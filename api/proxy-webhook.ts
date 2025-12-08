@@ -1,9 +1,10 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { Request, Response } from "express";
+import { Buffer } from "node:buffer";
 
 const DEFAULT_WEBHOOK_URL =
   "https://n8n.srv931715.hstgr.cloud/webhook/baseimagetoprompt";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: Request, res: Response) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
@@ -46,3 +47,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(502).json({ error: "Proxy request failed", message: String(err) });
   }
 }
+

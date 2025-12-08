@@ -53,6 +53,9 @@ export interface AdvancedSettingsAlwaysOpenProps {
     setTransformHead: (value: boolean) => void;
     angle: string;
     setAngle: (value: string) => void;
+    // Background Environment
+    backgroundEnvironment: string;
+    setBackgroundEnvironment: (value: string) => void;
 }
 
 export default function AdvancedSettingsAlwaysOpen({
@@ -86,6 +89,8 @@ export default function AdvancedSettingsAlwaysOpen({
     setTransformHead,
     angle,
     setAngle,
+    backgroundEnvironment,
+    setBackgroundEnvironment,
 }: AdvancedSettingsAlwaysOpenProps) {
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
 
@@ -234,6 +239,36 @@ export default function AdvancedSettingsAlwaysOpen({
                                     <SelectItem value="surprised">Surprised</SelectItem>
                                     <SelectItem value="serious">Serious</SelectItem>
                                     <SelectItem value="smiling">Smiling</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="backgroundEnvironment">Background/Environment Theme</Label>
+                            <Select value={backgroundEnvironment} onValueChange={setBackgroundEnvironment}>
+                                <SelectTrigger id="backgroundEnvironment">
+                                    <SelectValue placeholder="Select Background" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="studio">Studio</SelectItem>
+                                    <SelectItem value="urban-street">Urban Street</SelectItem>
+                                    <SelectItem value="nature-outdoor">Nature/Outdoor</SelectItem>
+                                    <SelectItem value="office">Office</SelectItem>
+                                    <SelectItem value="cafe">Cafe</SelectItem>
+                                    <SelectItem value="beach">Beach</SelectItem>
+                                    <SelectItem value="mountain">Mountain</SelectItem>
+                                    <SelectItem value="desert">Desert</SelectItem>
+                                    <SelectItem value="forest">Forest</SelectItem>
+                                    <SelectItem value="city-skyline">City Skyline</SelectItem>
+                                    <SelectItem value="industrial">Industrial</SelectItem>
+                                    <SelectItem value="minimalist">Minimalist</SelectItem>
+                                    <SelectItem value="luxury">Luxury</SelectItem>
+                                    <SelectItem value="vintage">Vintage</SelectItem>
+                                    <SelectItem value="futuristic">Futuristic</SelectItem>
+                                    <SelectItem value="abstract">Abstract</SelectItem>
+                                    <SelectItem value="gradient">Gradient</SelectItem>
+                                    <SelectItem value="bokeh">Bokeh</SelectItem>
+                                    <SelectItem value="solid-color">Solid Color</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

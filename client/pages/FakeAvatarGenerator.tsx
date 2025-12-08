@@ -30,6 +30,9 @@ export default function FakeAvatarGenerator() {
     // Transform Head
     const [transformHead, setTransformHead] = useState(false);
     const [angle, setAngle] = useState("");
+    // Background Environment
+    const [backgroundEnvironment, setBackgroundEnvironment] = useState("");
+
 
     const abortRef = useRef<AbortController | null>(null);
 
@@ -79,6 +82,7 @@ export default function FakeAvatarGenerator() {
                 ears,
                 transformHead,
                 angle,
+                backgroundEnvironment,
             });
             // Only use the first prompt (1 variation)
             const singlePrompt = out.length > 0 ? [out[0]] : [];
@@ -149,6 +153,8 @@ export default function FakeAvatarGenerator() {
                     setTransformHead={setTransformHead}
                     angle={angle}
                     setAngle={setAngle}
+                    backgroundEnvironment={backgroundEnvironment}
+                    setBackgroundEnvironment={setBackgroundEnvironment}
                 />
 
                 {!prompts && (

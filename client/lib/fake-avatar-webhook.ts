@@ -1,5 +1,5 @@
 const DEFAULT_WEBHOOK_URL =
-    "https://n8n.srv931715.hstgr.cloud/webhook/fakeavatar";
+    "https://n8n.srv1151765.hstgr.cloud/webhook/fakeavatar";
 export const FAKE_AVATAR_WEBHOOK_URL: string =
     ((import.meta as any)?.env?.VITE_FAKE_AVATAR_WEBHOOK_URL as string | undefined) ||
     DEFAULT_WEBHOOK_URL;
@@ -51,6 +51,7 @@ export async function handleFakeAvatarSubmission(
         ears?: string;
         transformHead?: boolean;
         angle?: string;
+        backgroundEnvironment?: string;
     },
 ): Promise<string[]> {
     const formData = new FormData();
@@ -71,6 +72,7 @@ export async function handleFakeAvatarSubmission(
     if (opts?.ears) formData.append("ears", opts.ears);
     if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
     if (opts?.angle) formData.append("angle", opts.angle);
+    if (opts?.backgroundEnvironment) formData.append("backgroundEnvironment", opts.backgroundEnvironment);
 
     // Try direct POST first (may fail due to CORS)
     try {
