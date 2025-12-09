@@ -26,7 +26,7 @@ export default function Header() {
     {
       label: "Generators",
       children: [
-        { to: "/generate", label: "Image to Prompt" },
+        { to: "/generate", label: "Fashion to Prompt" },
         { to: "/scene-to-prompt", label: "Scene to Prompt" },
         { to: "/broll-to-prompt", label: "B-Roll to Prompt" },
         { to: "/fake-avatar-generator", label: "Fake Avatar Generator" },

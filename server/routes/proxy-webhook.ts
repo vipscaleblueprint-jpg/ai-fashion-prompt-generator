@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { Readable } from "stream";
 
 const DEFAULT_WEBHOOK_URL =
-  "https://n8n.srv931715.hstgr.cloud/webhook/baseimagetoprompt";
+  "https://n8n.srv1151765.hstgr.cloud/webhook/baseimagetoprompt";
 
 export const handleProxyWebhook: RequestHandler = (req, res) => {
   const webhook =

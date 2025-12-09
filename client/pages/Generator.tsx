@@ -106,12 +106,11 @@ export default function Generator() {
         angle,
         pose,
       });
-      // Only use the first prompt (1 variation)
-      const singlePrompt = out.length > 0 ? [out[0]] : [];
-      setPrompts(singlePrompt);
+      // Display all prompts from the webhook response
+      setPrompts(out);
       // Persist to history with the original file (not compressed, for better thumbnail quality)
       try {
-        await addHistoryEntry({ file, prompts: singlePrompt });
+        await addHistoryEntry({ file, prompts: out });
       } catch { }
       toast.success("Prompts generated successfully");
     } catch (e: any) {
@@ -139,7 +138,7 @@ export default function Generator() {
       <section className="mb-10">
         <div className="max-w-3xl space-y-3">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            AI Fashion Image Prompt Generator
+            AI Fashion Image to Prompt Generator
           </h1>
           <p className="text-foreground/80 text-lg">
             Transform your fashion images into professional photography prompts
@@ -192,6 +191,8 @@ export default function Generator() {
             setPose={setPose}
           />
 
+          <ResultsSection prompts={prompts} />
+
           {!prompts && (
             <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground mb-2">
@@ -233,8 +234,6 @@ export default function Generator() {
               </div>
             </div>
           )}
-
-          {prompts && <ResultsSection prompts={prompts} />}
         </div>
       </div>
     </div>
