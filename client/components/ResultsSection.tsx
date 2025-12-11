@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface ResultsSectionProps {
   prompts: string[] | null;
+  labels?: string[]; // Optional custom labels for each prompt
 }
 
 function download(filename: string, content: string, type: string) {
@@ -15,7 +16,7 @@ function download(filename: string, content: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
-export default function ResultsSection({ prompts }: ResultsSectionProps) {
+export default function ResultsSection({ prompts, labels }: ResultsSectionProps) {
   const hasPrompts = prompts && prompts.length > 0;
 
   const handleDownloadText = () => {
@@ -36,6 +37,11 @@ export default function ResultsSection({ prompts }: ResultsSectionProps) {
     download("fashion-prompts.json", json, "application/json;charset=utf-8");
   };
 
+  const getTitle = (i: number) => {
+    if (labels && labels[i]) return labels[i];
+    return prompts!.length > 1 ? `Variation ${i + 1}` : "Generated Prompt";
+  };
+
   return (
     <section className="space-y-4">
       {hasPrompts && (
@@ -53,8 +59,16 @@ export default function ResultsSection({ prompts }: ResultsSectionProps) {
           </div>
           <div className="grid grid-cols-1 gap-4">
             {prompts.map((p, i) => (
-              <PromptCard key={i} title={prompts.length > 1 ? `Variation ${i + 1}` : "Generated Prompt"} prompt={p} />
+              <PromptCard key={i} title={getTitle(i)} prompt={p} />
             ))}
+
+            {prompts.length > 1 && (
+              <PromptCard
+                key="combined"
+                title="Combined Prompt"
+                prompt={prompts.join("\n\n")}
+              />
+            )}
           </div>
         </>
       )}

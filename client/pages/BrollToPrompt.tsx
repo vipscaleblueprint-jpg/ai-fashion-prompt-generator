@@ -12,6 +12,8 @@ import { Loader2, X } from "lucide-react";
 export default function BrollToPrompt() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [refFile, setRefFile] = useState<File | null>(null);
+  const [refPreviewUrl, setRefPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("Idle");
   const [prompts, setPrompts] = useState<string[] | null>(null);
@@ -41,8 +43,9 @@ export default function BrollToPrompt() {
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
     };
-  }, [previewUrl]);
+  }, [previewUrl, refPreviewUrl]);
 
   const onFileSelected = (f: File) => {
     setFile(f);
@@ -52,10 +55,21 @@ export default function BrollToPrompt() {
     setPreviewUrl(url);
   };
 
+  const onRefFileSelected = (f: File) => {
+    setRefFile(f);
+    // Don't clear main prompts/error necessarily, or maybe do?
+    // Let's keep them if user is just adding a ref face.
+    const url = URL.createObjectURL(f);
+    setRefPreviewUrl(url);
+  };
+
   const resetAll = () => {
     setFile(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
+    setRefFile(null);
+    if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+    setRefPreviewUrl(null);
     setPrompts(null);
     setError(null);
     setStatus("Idle");
@@ -83,7 +97,7 @@ export default function BrollToPrompt() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const out = await handleBrollImageSubmission(file, {
+      const out = await handleBrollImageSubmission(file, refFile, {
         signal: controller.signal,
         ethnicity,
         gender,
@@ -101,12 +115,13 @@ export default function BrollToPrompt() {
         transformHead,
         angle,
       });
-      // Only use the first prompt (1 variation)
-      const singlePrompt = out.length > 0 ? [out[0]] : [];
-      setPrompts(singlePrompt);
+      // Combine all prompts (if required) or show them separately.
+      // User requested dynamic behavior: if 2 items, show separate prompts.
+      // So we just pass the array 'out' directly, and ResultsSection will iterate them.
+      setPrompts(out);
       // Persist to history with the original file
       try {
-        await addHistoryEntry({ file, prompts: singlePrompt });
+        await addHistoryEntry({ file, prompts: out });
       } catch { }
       toast.success("Prompts generated successfully");
     } catch (e: any) {
@@ -144,11 +159,51 @@ export default function BrollToPrompt() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
-          {!file ? (
-            <UploadZone onFileSelected={onFileSelected} />
-          ) : (
-            <ImagePreview src={previewUrl!} onChangeImage={resetAll} />
-          )}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground/80">Main B-Roll Image</h3>
+            {!file ? (
+              <UploadZone onFileSelected={onFileSelected} />
+            ) : (
+              <ImagePreview src={previewUrl!} onChangeImage={resetAll} />
+            )}
+          </div>
+
+          <div className="space-y-2 pt-4 border-t border-dashed border-border">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground/80">Reference Face Analyzer (Optional)</h3>
+              {refFile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={() => {
+                    setRefFile(null);
+                    if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+                    setRefPreviewUrl(null);
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {!refFile ? (
+              <div className="scale-90 origin-top-left w-[111%]">
+                {/* Scaling down slightly to indicate secondary importance */}
+                <UploadZone onFileSelected={onRefFileSelected} />
+              </div>
+            ) : (
+              <ImagePreview
+                src={refPreviewUrl!}
+                alt="Reference face preview"
+                onChangeImage={() => {
+                  setRefFile(null);
+                  if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+                  setRefPreviewUrl(null);
+                }}
+              />
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -227,7 +282,7 @@ export default function BrollToPrompt() {
             </div>
           )}
 
-          {prompts && <ResultsSection prompts={prompts} />}
+          {prompts && <ResultsSection prompts={prompts} labels={prompts.length === 2 ? ["Scene Description", "Face Analysis Prompt"] : undefined} />}
         </div>
       </div>
     </div>

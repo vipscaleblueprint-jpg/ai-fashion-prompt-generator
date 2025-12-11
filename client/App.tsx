@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Generator from "./pages/Generator";
 import SceneToPrompt from "./pages/SceneToPrompt";
+import SceneTextToPrompt from "./pages/SceneTextToPrompt";
 import BrollToPrompt from "./pages/BrollToPrompt";
 import FakeAvatarGenerator from "./pages/FakeAvatarGenerator";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/generate" element={<Generator />} />
               <Route path="/scene-to-prompt" element={<SceneToPrompt />} />
+              <Route path="/scene-text-to-prompt" element={<SceneTextToPrompt />} />
               <Route path="/broll-to-prompt" element={<BrollToPrompt />} />
               <Route path="/fake-avatar-generator" element={<FakeAvatarGenerator />} />
               <Route path="/how-it-works" element={<HowItWorks />} />

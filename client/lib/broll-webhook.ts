@@ -1,5 +1,5 @@
 const DEFAULT_BROLL_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts";
+  "https://n8n.srv1151765.hstgr.cloud/webhook/broll-scene-image";
 export const BROLL_WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL as string | undefined) ||
   DEFAULT_BROLL_WEBHOOK_URL;
@@ -18,23 +18,57 @@ type VariationItem = {
 async function normalizeToPrompts(data: unknown): Promise<string[]> {
   if (!data) return [];
   if (Array.isArray(data)) {
+    // Iterate over the array and extract prompt from each item based on its structure
     return (data as any[])
-      .map((it) => it?.input?.prompt)
+      .map((item) => {
+        // Case 1: Simple string
+        if (typeof item === 'string') return item;
+
+        // Case 2: Object with input.prompt (Standard structure)
+        if (item?.input?.prompt && typeof item.input.prompt === 'string') return item.input.prompt;
+
+        // Case 3: Object with 'content.parts[0].text' (Gemini/Face Analysis structure)
+        if (item?.content?.parts && Array.isArray(item.content.parts) && item.content.parts.length > 0) {
+          if (item.content.parts[0]?.text && typeof item.content.parts[0].text === 'string') {
+            return item.content.parts[0].text;
+          }
+        }
+
+        // Case 4: Direct fields (prompt, text, output)
+        if (item?.prompt && typeof item.prompt === 'string') return item.prompt;
+        if (item?.text && typeof item.text === 'string') return item.text;
+        if (item?.output && typeof item.output === 'string') return item.output;
+
+        return null;
+      })
       .filter((p): p is string => typeof p === "string");
   }
   if (typeof data === "object") {
     const obj = data as any;
+    // Handle nested input array
     if (Array.isArray(obj.input)) {
       return obj.input
         .map((x: any) => x?.prompt)
         .filter((p: any): p is string => typeof p === "string");
     }
+    // Handle specific nested content like Gemini if returned as single object
+    if (obj.content?.parts && Array.isArray(obj.content.parts)) {
+      if (obj.content.parts[0]?.text && typeof obj.content.parts[0].text === 'string') {
+        return [obj.content.parts[0].text];
+      }
+    }
+
+    // Handle direct fields
+    const candidates = [obj.output, obj.text, obj.prompt, obj.result];
+    const found = candidates.filter(c => typeof c === "string");
+    if (found.length > 0) return found;
   }
   return [];
 }
 
 export async function handleBrollImageSubmission(
   imageFile: File,
+  referenceImageFile: File | null,
   opts?: {
     signal?: AbortSignal;
     ethnicity?: string;
@@ -59,6 +93,7 @@ export async function handleBrollImageSubmission(
 
   const formData = new FormData();
   formData.append("data", imageFile); // Using same field name as webhook expects
+  if (referenceImageFile) formData.append("Face_Analyzer", referenceImageFile);
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
   if (opts?.gender) formData.append("gender", opts.gender);
   if (opts?.skinColor) formData.append("skinColor", opts.skinColor);
@@ -100,6 +135,8 @@ export async function handleBrollImageSubmission(
         data = text;
       }
     }
+
+    console.log("B-Roll Webhook Response:", data);
 
     const prompts = await normalizeToPrompts(data);
     if (prompts.length > 0) return prompts;
