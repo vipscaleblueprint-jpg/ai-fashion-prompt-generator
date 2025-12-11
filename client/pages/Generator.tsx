@@ -156,7 +156,7 @@ export default function Generator() {
         </div>
 
         <div className="space-y-6">
-          <AdvancedSettings
+          {/* <AdvancedSettings
             ethnicity={ethnicity}
             setEthnicity={setEthnicity}
             gender={gender}
@@ -189,7 +189,7 @@ export default function Generator() {
             setAngle={setAngle}
             pose={pose}
             setPose={setPose}
-          />
+          /> */}
 
           <ResultsSection prompts={prompts} />
 
