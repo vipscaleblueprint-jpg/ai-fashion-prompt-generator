@@ -14,13 +14,13 @@ export const ourFileRouter = {
             return { userId: "anonymous" };
         })
         .onUploadComplete(async ({ metadata, file }) => {
-            console.log("Upload complete for file:", file.key);
+            console.log("Upload complete for file:", (file as any).key);
             console.log("File metadata:", metadata);
 
             // Webhook notification removed to prevent double invocation (handled client-side)
 
             // Return data available to the client
-            return { uploadedBy: metadata.userId, url: `https://utfs.io/f/${file.key}` };
+            return { uploadedBy: metadata.userId, url: `https://utfs.io/f/${(file as any).key}` };
         }),
 } satisfies FileRouter;
 
