@@ -4,7 +4,7 @@ import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import ResultsSection from "@/components/ResultsSection";
 import AdvancedSettings from "@/components/AdvancedSettings";
-import { handleBrollImageSubmission2 } from "@/lib/broll-webhook";
+import { handleBrollImageSubmission2, fetchFaceProfile } from "@/lib/broll-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
 import { Loader2, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -362,20 +362,20 @@ export default function BrollToPrompt2() {
         setSelectedClient(value);
         setIsFetchingFaceProfile(true);
         try {
-            const response = await fetch(`/api/marketing-clients/${encodeURIComponent(value)}/face-profile`);
-            if (response.ok) {
-                const data = await response.json();
-                const faceData = data[0]?.face || null;
-                if (faceData) {
-                    setPrompts(prev => {
-                        // Logic: prompts[0] is Face, prompts[1] is Scene.
-                        const scenePrompt = prev && prev[1] ? prev[1] : "";
-                        return [faceData, scenePrompt];
-                    });
-                    toast.success("Face profile loaded successfully");
-                }
+            // Use the shared library function which handles the webhook directly
+            const faceData = await fetchFaceProfile(value);
+
+            if (faceData) {
+                setPrompts(prev => {
+                    // Logic: prompts[0] is Face, prompts[1] is Scene.
+                    const scenePrompt = prev && prev[1] ? prev[1] : "";
+                    return [faceData, scenePrompt];
+                });
+                toast.success("Face profile loaded successfully");
             } else {
-                toast.error("Failed to load face profile");
+                // Even if null, we might want to clear the prompt?
+                // Current logic only acts if faceData exists.
+                toast.error("No face profile found for this client");
             }
         } catch (e) {
             console.error(e);
