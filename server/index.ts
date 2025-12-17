@@ -20,7 +20,10 @@ import marketingClientsRouter from "./routes/marketing-clients";
 export function createServer() {
   const app = express();
 
-  console.log(process.env.PI_API_KEY);
+
+
+  // Connect to MongoDB
+  connectDB();
 
 
 
@@ -58,4 +61,4 @@ export function createServer() {
 }
 
 // Connect to MongoDB
-connectDB();
+
