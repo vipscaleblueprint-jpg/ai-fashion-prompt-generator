@@ -4,7 +4,7 @@ import { connectDB } from './_db';
 // but importing from relative path ../server/models/BrollScene should work if included in build.
 // To be safe and self-contained, I will redefine the model here slightly or import it.
 // Let's try importing first. If Vercel fails to bundle, we move it.
-import BrollScene from '../server/models/BrollScene';
+import BrollScene from './models/BrollScene';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Connect to DB

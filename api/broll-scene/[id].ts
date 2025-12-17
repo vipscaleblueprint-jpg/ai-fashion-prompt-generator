@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { connectDB } from '../_db';
-import BrollScene from '../../server/models/BrollScene';
+import BrollScene from '../models/BrollScene';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { method } = req;
