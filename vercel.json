@@ -4,6 +4,14 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/marketing-clients(.*)",
+      "destination": "/api/marketing-clients"
+    },
+    {
+      "source": "/api/broll-scene(.*)",
+      "destination": "/api/broll-scene"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
