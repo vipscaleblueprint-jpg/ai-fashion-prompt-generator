@@ -24,6 +24,7 @@ import History from "./pages/History";
 import FaceAnalyzer from "./pages/FaceAnalyzer";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Kling from "./pages/Kling";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/history" element={<History />} />
               <Route path="/face-analyzer" element={<FaceAnalyzer />} />
+              <Route path="/kling" element={<Kling />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

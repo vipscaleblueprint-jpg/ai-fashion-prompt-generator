@@ -34,6 +34,7 @@ export default function Header() {
         { to: "/broll-to-prompt-3", label: "Broll Scene Image Upload" },
         { to: "/fake-avatar-generator", label: "Fake Avatar Generator" },
         { to: "/face-analyzer", label: "Analyzers" },
+        { to: "/kling", label: "Kling" },
       ],
     },
     { to: "/how-it-works", label: "How It Works" },

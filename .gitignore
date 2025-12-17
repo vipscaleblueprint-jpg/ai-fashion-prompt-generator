@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 .config/
-!.env
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+.env
