@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import PromptCard from "./PromptCard";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Video } from "lucide-react";
+import { Loader2, Sparkles, Video, Download } from "lucide-react";
 import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ interface ResultsSectionProps {
   startFrameImage?: File | null;
   endFrameImage?: File | null;
   isGeneratingKlingVideo?: boolean;
+  videoStatus?: string; // Status text from polling
+  videoUrl?: string | null; // Final video URL
   onGenerateKlingVideo?: (
     params: {
       prompt: string;
@@ -55,6 +57,8 @@ export default function ResultsSection({
   startFrameImage,
   endFrameImage,
   isGeneratingKlingVideo,
+  videoStatus,
+  videoUrl,
   onGenerateKlingVideo
 }: ResultsSectionProps) {
   const hasPrompts = (prompts && prompts.length > 0);
@@ -72,9 +76,9 @@ export default function ResultsSection({
   const [localEndFrame, setLocalEndFrame] = useState<File | null>(null);
   const [localEndPreview, setLocalEndPreview] = useState<string | null>(null);
   // New fields state
-  const [negativePrompt, setNegativePrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("blur, jitter, artifacts, distortion");
   const [cfgScale, setCfgScale] = useState("0.5");
-  const [mode, setMode] = useState("std");
+  const [mode, setMode] = useState("pro"); // Default to pro as per Kling.tsx usually? Or std. Kling.tsx default was pro.
   const [duration, setDuration] = useState("5");
   const [version, setVersion] = useState("1.6");
 
@@ -258,6 +262,42 @@ export default function ResultsSection({
                           Kling Video Generator
                         </h3>
                       </div>
+
+                      {/* Video Player / Result Area */}
+                      <div className="w-full aspect-video bg-muted rounded-xl flex items-center justify-center border border-border overflow-hidden relative">
+                        {videoUrl ? (
+                          <video
+                            src={videoUrl}
+                            controls
+                            autoPlay
+                            loop
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center p-6 text-muted-foreground w-full">
+                            {isGeneratingKlingVideo || videoStatus ? (
+                              <div className="flex flex-col items-center gap-2">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="font-medium text-foreground">{videoStatus || "Processing..."}</p>
+                                <p className="text-xs">This may take a few minutes...</p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center gap-2">
+                                <Video className="w-12 h-12 text-muted-foreground/50" />
+                                <p>Video preview will appear here</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {videoUrl && (
+                        <Button className="w-full" variant="outline" asChild>
+                          <a href={videoUrl} download target="_blank" rel="noreferrer">
+                            <Download className="mr-2 h-4 w-4" /> Download Video
+                          </a>
+                        </Button>
+                      )}
 
                       <div className="space-y-4">
                         <div className="space-y-2">
@@ -443,12 +483,12 @@ export default function ResultsSection({
                           disabled={isGeneratingKlingVideo || !videoSceneInput.trim() || !localStartFrame}
                           className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                         >
-                          {isGeneratingKlingVideo ? (
+                          {isGeneratingKlingVideo || (videoStatus && videoStatus !== "Failed") ? (
                             <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Video Request...
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {videoStatus || "Generating Video..."}
                             </>
                           ) : (
-                            "Generate Kling Video JSON"
+                            "Generate Video"
                           )}
                         </Button>
                       </div>
@@ -463,4 +503,3 @@ export default function ResultsSection({
     </section>
   );
 }
-

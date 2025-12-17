@@ -8,8 +8,26 @@ import { handleBrollImageSubmission } from "@/lib/broll-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
 import { Loader2, X } from "lucide-react";
+import { useUploadThing } from "@/lib/uploadthing-config"; // Imported useUploadThing
 
-import { handleKlingPromptSubmission, handleKlingVideoSubmission } from "@/lib/kling-webhook";
+import { handleKlingPromptSubmission } from "@/lib/kling-webhook";
+
+// Type definitions for PiAPI responses (copied from Kling.tsx)
+interface PiApiTaskResponse {
+  code: number;
+  data: {
+    task_id: string;
+    status: string;
+    output?: {
+      video_url?: string;
+    };
+    error?: {
+      code: number;
+      message: string;
+    };
+  };
+  message: string;
+}
 
 export default function BrollToPrompt() {
   const [file, setFile] = useState<File | null>(null);
@@ -24,7 +42,14 @@ export default function BrollToPrompt() {
   // Kling State
   const [klingPrompt, setKlingPrompt] = useState<string | null>(null);
   const [isGeneratingKling, setIsGeneratingKling] = useState(false);
-  const [isGeneratingKlingVideo, setIsGeneratingKlingVideo] = useState(false);
+
+  // Kling Video State
+  const [isGeneratingKlingVideo, setIsGeneratingKlingVideo] = useState(false); // Used for initial submission info
+  const [videoTaskId, setVideoTaskId] = useState<string | null>(null); // To track polling
+  const [videoStatus, setVideoStatus] = useState<string>(""); // Polling status text
+  const [videoUrl, setVideoUrl] = useState<string | null>(null); // Final video URL
+
+  const { startUpload } = useUploadThing("imageUploader");
 
 
   // Advanced Settings State
@@ -55,6 +80,47 @@ export default function BrollToPrompt() {
     };
   }, [previewUrl, refPreviewUrl]);
 
+  // Polling Effect for Kling Video
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (videoTaskId && isGeneratingKlingVideo) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/piapi/kling/task/${videoTaskId}`);
+          const data: PiApiTaskResponse = await res.json();
+
+          if (data.code === 200) {
+            const taskStatus = data.data.status;
+            setVideoStatus(`Status: ${taskStatus}`);
+
+            if (taskStatus === "completed") {
+              if (data.data.output?.video_url) {
+                setVideoUrl(data.data.output.video_url);
+                toast.success("Video generated successfully!");
+              } else {
+                toast.error("Completed but no video URL found.");
+              }
+              setIsGeneratingKlingVideo(false);
+              setVideoTaskId(null);
+            } else if (taskStatus === "failed") {
+              toast.error(`Generation failed: ${data.data.error?.message || "Unknown error"}`);
+              setIsGeneratingKlingVideo(false);
+              setVideoTaskId(null);
+            }
+          } else {
+            console.warn("Polling error:", data);
+          }
+        } catch (err) {
+          console.error("Polling fetch error", err);
+        }
+      }, 5000); // Poll every 5 seconds
+    }
+
+    return () => clearInterval(intervalId);
+  }, [videoTaskId, isGeneratingKlingVideo]);
+
+
   const onFileSelected = (f: File) => {
     setFile(f);
     setPrompts(null);
@@ -62,6 +128,11 @@ export default function BrollToPrompt() {
     setError(null);
     const url = URL.createObjectURL(f);
     setPreviewUrl(url);
+
+    // Reset video state on new main image? Probably good UX
+    setVideoUrl(null);
+    setVideoTaskId(null);
+    setIsGeneratingKlingVideo(false);
   };
 
   const onRefFileSelected = (f: File) => {
@@ -83,6 +154,12 @@ export default function BrollToPrompt() {
     setKlingPrompt(null);
     setError(null);
     setStatus("Idle");
+
+    // Reset video state
+    setVideoUrl(null);
+    setVideoTaskId(null);
+    setVideoStatus("");
+    setIsGeneratingKlingVideo(false);
   };
 
   const startProgressMessages = () => {
@@ -183,20 +260,71 @@ export default function BrollToPrompt() {
     startFrame: File;
     endFrame: File | null;
   }) => {
+
     setIsGeneratingKlingVideo(true);
+    setVideoStatus("Uploading images...");
+    setVideoUrl(null);
+    setVideoTaskId(null);
+
     try {
-      const result = await handleKlingVideoSubmission({
-        ...params,
-        endFrame: params.endFrame || undefined
+      // 1. Upload Images using uploadthing
+      const filesToUpload = [params.startFrame];
+      if (params.endFrame) filesToUpload.push(params.endFrame);
+
+      const uploadRes = await startUpload(filesToUpload);
+
+      if (!uploadRes || uploadRes.length !== filesToUpload.length) {
+        throw new Error("Failed to upload images");
+      }
+
+      const startImageUrl = uploadRes[0].url;
+      const endImageUrl = params.endFrame ? uploadRes[1].url : undefined;
+
+      setVideoStatus("Submitting task to Kling...");
+
+      // 2. Submit Task to PiAPI (via Proxy)
+      const payload = {
+        prompt: params.prompt,
+        negative_prompt: params.negativePrompt,
+        cfg_scale: parseFloat(params.cfgScale),
+        duration: parseInt(params.duration),
+        image_url: startImageUrl,
+        image_tail_url: endImageUrl,
+        mode: params.mode,
+        version: params.version,
+        aspect_ratio: params.aspectRatio // Currently PiAPI Kling usually takes aspect_ratio if text-to-video or image-to-video? 
+        // Note: Kling.tsx payload didn't strictly send aspect_ratio in the snippet I saw, but let's check.
+        // Kling.tsx line 155 didn't have aspect_ratio. It just had image_url etc.
+        // However, ResultsSection passes it. Let's send it if the API supports it, or ignore.
+        // The Kling.tsx implementation was img-to-video, which usually respects input image ratio.
+        // But let's check if 'aspect_ratio' is valid. The `Kling.tsx` payload logic didn't assume aspect ratio for I2V. 
+        // We'll stick to what Kling.tsx did for I2V: which is mostly ignoring aspect ratio or relying on the image.
+      };
+
+      // NOTE: Kling.tsx used `mode` and `version`.
+
+      const res = await fetch("/api/piapi/kling/task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
 
-      console.log("Kling Video Response:", result);
-      toast.success("Kling video request sent successfully!");
+      const data: PiApiTaskResponse = await res.json();
+
+      if (data.code === 200 && data.data.task_id) {
+        setVideoTaskId(data.data.task_id);
+        setVideoStatus("Pending...");
+        toast.success("Task submitted successfully!");
+        // Polling effect will take over safely because isGeneratingKlingVideo is true and taskId is set.
+      } else {
+        throw new Error(data.message || data.data.error?.message || "Submission failed");
+      }
+
     } catch (e: any) {
-      toast.error("Failed to send Kling video request");
       console.error(e);
-    } finally {
+      toast.error(e.message || "Something went wrong");
       setIsGeneratingKlingVideo(false);
+      setVideoStatus("Failed");
     }
   };
 
@@ -352,7 +480,11 @@ export default function BrollToPrompt() {
               onGenerateKling={handleGenerateKling}
               startFrameImage={file}
               endFrameImage={refFile}
+
+              // Video Generation Props
               isGeneratingKlingVideo={isGeneratingKlingVideo}
+              videoStatus={videoStatus}
+              videoUrl={videoUrl}
               onGenerateKlingVideo={handleGenerateKlingVideo}
             />
           )}

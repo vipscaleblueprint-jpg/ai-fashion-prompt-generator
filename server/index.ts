@@ -13,13 +13,15 @@ import { handleProxySceneWebhook } from "./routes/proxy-scene-webhook";
 import { handleProxyBrollWebhook } from "./routes/proxy-broll-webhook";
 import { handleProxyGenerateImage } from "./routes/proxy-generate-image";
 import { uploadthingRouteHandler } from "./routes/uploadthing-handler";
+import { connectDB } from "./db";
+import brollSceneRouter from "./routes/broll-scene";
 
 export function createServer() {
   const app = express();
 
   console.log(process.env.PI_API_KEY);
 
-  
+
 
   // Middleware
   app.use(cors());
@@ -43,8 +45,13 @@ export function createServer() {
   const { createKlingTask, getKlingTask } = require("./routes/piapi-kling");
   app.post("/api/piapi/kling/task", createKlingTask);
   app.get("/api/piapi/kling/task/:taskId", getKlingTask);
-  // UploadThing routes
   app.use("/api/uploadthing", uploadthingRouteHandler);
+
+  // Broll Scene CRUD Routes
+  app.use("/api/broll-scene", brollSceneRouter);
 
   return app;
 }
+
+// Connect to MongoDB
+connectDB();

@@ -63,15 +63,19 @@ export default function BrollToPrompt2() {
     const [isLoadingClients, setIsLoadingClients] = useState(false);
     const [isFetchingFaceProfile, setIsFetchingFaceProfile] = useState(false);
 
-    // UI State
+    // UI State - Upload section only shows when image is selected
     const [isUploadSectionOpen, setIsUploadSectionOpen] = useState(false);
 
     // Search State
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<string[]>([]);
-    const [visibleCount, setVisibleCount] = useState(4);
+    const [allResults, setAllResults] = useState<string[]>([]); // Store all results
+    const [originalResults, setOriginalResults] = useState<string[]>([]); // Store original unfiltered results
+    const [visibleCount, setVisibleCount] = useState(8);
     const [generatingUrl, setGeneratingUrl] = useState<string | null>(null);
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [filterMode, setFilterMode] = useState<"all" | "most-used">("all");
 
     const abortRef = useRef<AbortController | null>(null);
 
@@ -79,11 +83,14 @@ export default function BrollToPrompt2() {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         setSearchResults([]);
-        setVisibleCount(4);
+        setVisibleCount(8);
+        setSelectedImageUrl(null); // Reset selection when searching
         try {
             const urls = await searchImage(searchQuery);
             if (urls && urls.length > 0) {
                 setSearchResults(urls);
+                setAllResults(urls);
+                setOriginalResults(urls);
                 toast.success(`Found ${urls.length} images`);
             } else {
                 toast.error("No images found for your query.");
@@ -103,6 +110,9 @@ export default function BrollToPrompt2() {
             const fileName = `search-result-${Date.now()}.jpg`;
             const file = new File([blob], fileName, { type: blob.type });
             onFileSelected(file);
+            // Set selected image and filter results to show only this one
+            setSelectedImageUrl(url);
+            setSearchResults([url]);
             toast.success("Image loaded!");
         } catch (e) {
             console.error(e);
@@ -142,12 +152,69 @@ export default function BrollToPrompt2() {
         fetchClients();
     }, []);
 
+    // Load all images on page mount
+    useEffect(() => {
+        const loadAllImages = async () => {
+            setIsSearching(true);
+            try {
+                // Fetch all images by calling searchImage with empty query
+                const urls = await searchImage("");
+                console.log('Initial load - fetched', urls.length, 'images');
+                if (urls && urls.length > 0) {
+                    setSearchResults(urls);
+                    setAllResults(urls);
+                    setOriginalResults(urls);
+                } else {
+                    console.warn('No images returned from initial load');
+                }
+            } catch (e) {
+                console.error("Error loading images:", e);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        loadAllImages();
+    }, []);
+
+    // Handle filter mode changes
+    useEffect(() => {
+        const applyFilter = async () => {
+            if (filterMode === "most-used") {
+                try {
+                    // Fetch from MongoDB API which has usageCount
+                    const response = await fetch('/api/broll-scene');
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Sort by usageCount descending
+                        const sorted = data.sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0));
+                        const urls = sorted.map((item: any) => item.image_url).filter(Boolean);
+                        setSearchResults(urls);
+                        setAllResults(urls);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch most used:", err);
+                }
+            } else {
+                // Reset to original unfiltered results
+                if (originalResults.length > 0) {
+                    setSearchResults(originalResults);
+                    setAllResults(originalResults);
+                }
+            }
+        };
+
+        applyFilter();
+    }, [filterMode]);
+
     const onFileSelected = (f: File) => {
         setFile(f);
         // Do not clear prompts or Kling prompt when selecting a file, as requested for persistence
         setError(null);
         const url = URL.createObjectURL(f);
         setPreviewUrl(url);
+        // Show upload section when image is selected
+        setIsUploadSectionOpen(true);
     };
 
     const resetAll = () => {
@@ -157,6 +224,14 @@ export default function BrollToPrompt2() {
         setPrompts(null);
         setError(null);
         setStatus("Idle");
+        // Hide upload section when resetting
+        setIsUploadSectionOpen(false);
+        // Restore all search results
+        setSelectedImageUrl(null);
+        if (originalResults.length > 0) {
+            setSearchResults(originalResults);
+            setAllResults(originalResults);
+        }
     };
 
     const startProgressMessages = () => {
@@ -221,6 +296,25 @@ export default function BrollToPrompt2() {
                     await addHistoryEntry({ file: sourceToUse, prompts: out });
                 }
             } catch { }
+
+            // Increment usage count if image was selected from search
+            if (selectedImageUrl) {
+                console.log('Incrementing usage count for:', selectedImageUrl);
+                try {
+                    const response = await fetch('/api/broll-scene/increment-usage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageUrl: selectedImageUrl })
+                    });
+                    const result = await response.json();
+                    console.log('Usage increment response:', result);
+                } catch (err) {
+                    console.error('Failed to increment usage count:', err);
+                }
+            } else {
+                console.log('No selectedImageUrl, skipping usage increment');
+            }
+
             toast.success("Prompts generated successfully");
         } catch (e: any) {
             if (e?.name === "AbortError") {
@@ -303,6 +397,18 @@ export default function BrollToPrompt2() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
                     <div className="space-y-2">
+                        <Label>Filter</Label>
+                        <Select value={filterMode} onValueChange={(value: "all" | "most-used") => setFilterMode(value)}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Images</SelectItem>
+                                <SelectItem value="most-used">Most Used</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
                         <Label>Search for an Image</Label>
                         <div className="flex gap-2">
                             <input
@@ -310,20 +416,39 @@ export default function BrollToPrompt2() {
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 placeholder="e.g. sunset beach..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    const newValue = e.target.value;
+                                    setSearchQuery(newValue);
+                                    console.log('Search query changed to:', newValue);
+                                    console.log('originalResults length:', originalResults.length);
+                                    console.log('allResults length:', allResults.length);
+                                    console.log('searchResults length:', searchResults.length);
+                                    // If search is cleared, restore all results
+                                    if (newValue.trim() === '') {
+                                        console.log('Search cleared, restoring images...');
+                                        if (originalResults.length > 0) {
+                                            setSearchResults(originalResults);
+                                            setAllResults(originalResults);
+                                            setSelectedImageUrl(null);
+                                            console.log('Restored', originalResults.length, 'images');
+                                        } else {
+                                            console.log('No originalResults to restore!');
+                                        }
+                                    }
+                                }}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                             />
                             <Button onClick={handleSearch} disabled={isSearching || !searchQuery.trim()}>
                                 {isSearching ? <Loader2 className="animate-spin w-4 h-4" /> : "Search"}
                             </Button>
                         </div>
-                        {searchResults.length > 0 && (
+                        {searchResults.length > 0 && !selectedImageUrl && (
                             <div className="mt-4 space-y-4">
                                 <div className="grid grid-cols-2 gap-2">
                                     {searchResults.slice(0, visibleCount).map((url, idx) => (
                                         <div
                                             key={idx}
-                                            className="relative cursor-pointer hover:opacity-80 transition-opacity aspect-video rounded-md overflow-hidden border border-border group"
+                                            className="relative cursor-pointer hover:opacity-80 transition-opacity aspect-[3/4] rounded-md overflow-hidden border border-border group"
                                             onClick={() => handleSelectImage(url)}
                                         >
                                             <img
@@ -332,22 +457,8 @@ export default function BrollToPrompt2() {
                                                 loading="lazy"
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                             />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity p-4">
-                                                <span className="text-white text-xs font-medium">Click to Select</span>
-                                                <Button
-                                                    size="sm"
-                                                    className="w-full text-xs"
-                                                    onClick={(e) => handleSelectAndGenerate(url, e)}
-                                                    disabled={generatingUrl === url}
-                                                >
-                                                    {generatingUrl === url ? (
-                                                        <>
-                                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Generating...
-                                                        </>
-                                                    ) : (
-                                                        "Generate Prompt"
-                                                    )}
-                                                </Button>
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                <span className="text-white text-sm font-medium">Click to Select</span>
                                             </div>
                                         </div>
                                     ))}
@@ -356,7 +467,7 @@ export default function BrollToPrompt2() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setVisibleCount((prev) => prev + 4)}
+                                        onClick={() => setVisibleCount((prev) => prev + 8)}
                                         className="w-full text-xs"
                                     >
                                         See More ({searchResults.length - visibleCount} remaining)
@@ -366,23 +477,15 @@ export default function BrollToPrompt2() {
                         )}
                     </div>
 
-                    <div className="space-y-4">
-                        <button
-                            onClick={() => setIsUploadSectionOpen(!isUploadSectionOpen)}
-                            className="flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
-                        >
-                            Main B-Roll Image (Optional)
-                            {isUploadSectionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
-
-                        {isUploadSectionOpen && (
-                            !file ? (
+                    {isUploadSectionOpen && (
+                        <div className="space-y-4">
+                            {!file ? (
                                 <UploadZone onFileSelected={onFileSelected} />
                             ) : (
                                 <ImagePreview src={previewUrl!} onChangeImage={resetAll} />
-                            )
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-6">
@@ -393,8 +496,8 @@ export default function BrollToPrompt2() {
                                 <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Select a Client"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {clientList.map((client) => (
-                                    <SelectItem key={client.clockify_id || client.clickup_id || client.client_name} value={client.client_name}>
+                                {clientList.map((client, index) => (
+                                    <SelectItem key={`${client.clockify_id}-${client.clickup_id}-${client.client_name}-${index}`} value={client.client_name}>
                                         {client.client_name}
                                     </SelectItem>
                                 ))}

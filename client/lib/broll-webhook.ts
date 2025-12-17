@@ -412,7 +412,7 @@ export async function fetchFaceProfile(clientName: string): Promise<string | nul
   }
 }
 
-export const SEARCH_IMAGE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-image-url";
+export const SEARCH_IMAGE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-data";
 
 export async function searchImage(query: string): Promise<string[]> {
   try {
@@ -421,6 +421,10 @@ export async function searchImage(query: string): Promise<string[]> {
       headers: {
         "Content-Type": "application/json",
       },
+      // Sending query as part of the body, assuming the webhook can filter by it
+      // or we just fetch data and might filter client side if the webhook returns everything.
+      // Based on typical search patterns and the user request "apply it to broll image to prompt 2.0 search",
+      // we will send the query.
       body: JSON.stringify({ query }),
     });
 
@@ -437,17 +441,44 @@ export async function searchImage(query: string): Promise<string[]> {
     const extractUrl = (item: any): string | null => {
       if (!item) return null;
       if (typeof item === 'string') return item.trim();
+      // Prioritize image_url as per Broll 3.0
+      if (item.image_url && typeof item.image_url === 'string') return item.image_url.trim();
       if (item["preview image"] && typeof item["preview image"] === 'string') return item["preview image"].trim();
       if (item.url && typeof item.url === 'string') return item.url.trim();
-      if (item.image_url && typeof item.image_url === 'string') return item.image_url.trim();
       if (item.output && typeof item.output === 'string') return item.output.trim();
       return null;
     };
 
     if (Array.isArray(data)) {
+      const lowerQuery = query.toLowerCase().trim();
       data.forEach(item => {
-        const url = extractUrl(item);
-        if (url) urls.push(url);
+        // Client-side filtering if query is provided and the item has searchable fields
+        let match = true;
+
+        // If query is non-empty, check for matches
+        if (lowerQuery) {
+          match = false; // Default to no match if query exists
+
+          // Check Description
+          if (item.Description && typeof item.Description === 'string' && item.Description.toLowerCase().includes(lowerQuery)) match = true;
+          // Check Category
+          else if (item.Category && typeof item.Category === 'string' && item.Category.toLowerCase().includes(lowerQuery)) match = true;
+          // Check Camera Angle
+          else if (item["Camera Angle"] && typeof item["Camera Angle"] === 'string' && item["Camera Angle"].toLowerCase().includes(lowerQuery)) match = true;
+          // Check Setting_Location
+          else if (item.Setting_Location && typeof item.Setting_Location === 'string' && item.Setting_Location.toLowerCase().includes(lowerQuery)) match = true;
+          // Check Tags (array)
+          else if (Array.isArray(item.Tags)) {
+            if (item.Tags.some((tag: any) => typeof tag === 'string' && tag.toLowerCase().includes(lowerQuery))) match = true;
+          }
+          // Check output field just in case
+          else if (item.output && typeof item.output === 'string' && item.output.toLowerCase().includes(lowerQuery)) match = true;
+        }
+
+        if (match) {
+          const url = extractUrl(item);
+          if (url) urls.push(url);
+        }
       });
     } else {
       const url = extractUrl(data);
