@@ -5,15 +5,18 @@ export interface IBrollScene extends Document {
 }
 
 const BrollSceneSchema: Schema = new Schema({
-    // specific fields can be added here if known, but keeping it flexible for now
-    imageUrl: { type: String },
-    prompt: { type: String },
-    tags: { type: [String] },
+    Category: { type: String },
+    Description: { type: String },
+    "Camera Angle": { type: String },
+    "Setting_Location": { type: String },
+    Tags: { type: [String] },
+    image_url: { type: String },
+    imageUrl: { type: String }, // Keep for backward compatibility if needed
     usageCount: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
 }, {
     strict: false, // Allow other fields not in schema
-    collection: 'broll-scene' // Explicitly set collection name as requested
+    collection: 'broll_scene' // Explicitly set collection name as requested
 });
 
-export default mongoose.model<IBrollScene>('BrollScene', BrollSceneSchema);
+export default mongoose.models.BrollScene || mongoose.model<IBrollScene>('BrollScene', BrollSceneSchema);

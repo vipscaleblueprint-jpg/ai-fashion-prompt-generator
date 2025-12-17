@@ -4,7 +4,7 @@ import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import ResultsSection from "@/components/ResultsSection";
 import AdvancedSettings from "@/components/AdvancedSettings";
-import { handleBrollImageSubmission2, fetchFaceProfile, searchImage } from "@/lib/broll-webhook";
+import { handleBrollImageSubmission2 } from "@/lib/broll-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
 import { Loader2, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -16,7 +16,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { MARKETING_CLIENTS_WEBHOOK_URL } from "@/lib/face-analyzer-webhook";
 
 
 type MarketingClient = {
@@ -86,14 +85,24 @@ export default function BrollToPrompt2() {
         setVisibleCount(8);
         setSelectedImageUrl(null); // Reset selection when searching
         try {
-            const urls = await searchImage(searchQuery);
-            if (urls && urls.length > 0) {
-                setSearchResults(urls);
-                setAllResults(urls);
-                setOriginalResults(urls);
-                toast.success(`Found ${urls.length} images`);
+            const response = await fetch('/api/broll-scene/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: searchQuery })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const urls = data.map((item: any) => item.image_url || item.imageUrl || item.url).filter(Boolean);
+                if (urls && urls.length > 0) {
+                    setSearchResults(urls);
+                    setAllResults(urls);
+                    // Do NOT overwrite originalResults here - we want to keep the full list for resetting
+                    toast.success(`Found ${urls.length} images`);
+                } else {
+                    toast.error("No images found for your query.");
+                }
             } else {
-                toast.error("No images found for your query.");
+                toast.error("Failed to search images.");
             }
         } catch (e) {
             console.error(e);
@@ -130,7 +139,7 @@ export default function BrollToPrompt2() {
         const fetchClients = async () => {
             setIsLoadingClients(true);
             try {
-                const response = await fetch(MARKETING_CLIENTS_WEBHOOK_URL, {
+                const response = await fetch('/api/marketing-clients', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -157,15 +166,24 @@ export default function BrollToPrompt2() {
         const loadAllImages = async () => {
             setIsSearching(true);
             try {
-                // Fetch all images by calling searchImage with empty query
-                const urls = await searchImage("");
-                console.log('Initial load - fetched', urls.length, 'images');
-                if (urls && urls.length > 0) {
-                    setSearchResults(urls);
-                    setAllResults(urls);
-                    setOriginalResults(urls);
+                // Fetch all images from MongoDB (with cache busting)
+                const response = await fetch(`/api/broll-scene?t=${Date.now()}`);
+                console.log('BrollToPrompt2: Fetch response status:', response.status);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('BrollToPrompt2: Raw data fetched:', data);
+                    // Extract image URLs from the data
+                    const urls = data.map((item: any) => item.image_url || item.imageUrl || item.url).filter(Boolean);
+                    console.log('BrollToPrompt2: Extracted URLs:', urls);
+                    if (urls && urls.length > 0) {
+                        setSearchResults(urls);
+                        setAllResults(urls);
+                        setOriginalResults(urls);
+                    } else {
+                        console.warn('BrollToPrompt2: No images returned from initial load');
+                    }
                 } else {
-                    console.warn('No images returned from initial load');
+                    console.error('BrollToPrompt2: Fetch failed with status:', response.status);
                 }
             } catch (e) {
                 console.error("Error loading images:", e);
@@ -344,14 +362,20 @@ export default function BrollToPrompt2() {
         setSelectedClient(value);
         setIsFetchingFaceProfile(true);
         try {
-            const faceData = await fetchFaceProfile(value);
-            if (faceData) {
-                setPrompts(prev => {
-                    // Logic: prompts[0] is Face, prompts[1] is Scene.
-                    const scenePrompt = prev && prev[1] ? prev[1] : "";
-                    return [faceData, scenePrompt];
-                });
-                toast.success("Face profile loaded successfully");
+            const response = await fetch(`/api/marketing-clients/${encodeURIComponent(value)}/face-profile`);
+            if (response.ok) {
+                const data = await response.json();
+                const faceData = data[0]?.face || null;
+                if (faceData) {
+                    setPrompts(prev => {
+                        // Logic: prompts[0] is Face, prompts[1] is Scene.
+                        const scenePrompt = prev && prev[1] ? prev[1] : "";
+                        return [faceData, scenePrompt];
+                    });
+                    toast.success("Face profile loaded successfully");
+                }
+            } else {
+                toast.error("Failed to load face profile");
             }
         } catch (e) {
             console.error(e);
@@ -430,9 +454,13 @@ export default function BrollToPrompt2() {
                                             setSearchResults(originalResults);
                                             setAllResults(originalResults);
                                             setSelectedImageUrl(null);
+                                            setVisibleCount(8); // Reset pagination
                                             console.log('Restored', originalResults.length, 'images');
+                                            toast.info("Showing all images");
                                         } else {
                                             console.log('No originalResults to restore!');
+                                            // Fallback: try to re-fetch if originalResults is inexplicably empty
+                                            // But standard flow makes originalResults populated on mount.
                                         }
                                     }
                                 }}

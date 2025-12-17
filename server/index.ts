@@ -15,6 +15,7 @@ import { handleProxyGenerateImage } from "./routes/proxy-generate-image";
 import { uploadthingRouteHandler } from "./routes/uploadthing-handler";
 import { connectDB } from "./db";
 import brollSceneRouter from "./routes/broll-scene";
+import marketingClientsRouter from "./routes/marketing-clients";
 
 export function createServer() {
   const app = express();
@@ -49,6 +50,9 @@ export function createServer() {
 
   // Broll Scene CRUD Routes
   app.use("/api/broll-scene", brollSceneRouter);
+
+  // Marketing Clients Routes
+  app.use("/api/marketing-clients", marketingClientsRouter);
 
   return app;
 }

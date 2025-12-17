@@ -7,8 +7,9 @@ export async function connectDB() {
             throw new Error("MONGODB_URI is not defined in environment variables");
         }
 
-        await mongoose.connect(uri);
-        console.log("MongoDB connected successfully");
+        // Connect to 'Snaply' database explicitly to fix missing DB name in .env
+        await mongoose.connect(uri, { dbName: 'Snaply' });
+        console.log("MongoDB connected successfully to 'Snaply' database");
     } catch (error) {
         console.error("MongoDB connection error:", error);
         // Don't exit process in dev, just log
