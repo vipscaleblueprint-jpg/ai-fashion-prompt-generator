@@ -1,4 +1,10 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+
+// Explicitly load .env from project root
+const envPath = path.resolve(process.cwd(), ".env");
+console.log("Loading .env from:", envPath);
+dotenv.config({ path: envPath });
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
@@ -10,6 +16,10 @@ import { uploadthingRouteHandler } from "./routes/uploadthing-handler";
 
 export function createServer() {
   const app = express();
+
+  console.log(process.env.PI_API_KEY);
+
+  
 
   // Middleware
   app.use(cors());
@@ -29,6 +39,10 @@ export function createServer() {
   app.post("/api/proxy-broll-webhook", handleProxyBrollWebhook);
   app.post("/api/proxy-generate-image", handleProxyGenerateImage);
 
+  // PiAPI Kling Routes
+  const { createKlingTask, getKlingTask } = require("./routes/piapi-kling");
+  app.post("/api/piapi/kling/task", createKlingTask);
+  app.get("/api/piapi/kling/task/:taskId", getKlingTask);
   // UploadThing routes
   app.use("/api/uploadthing", uploadthingRouteHandler);
 

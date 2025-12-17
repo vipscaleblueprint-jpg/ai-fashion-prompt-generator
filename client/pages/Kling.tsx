@@ -39,7 +39,7 @@ export default function Kling() {
   const [negativePrompt, setNegativePrompt] = useState("blur, jitter, artifacts, distortion");
   const [duration, setDuration] = useState("5"); // 5 or 10
   const [cfgScale, setCfgScale] = useState("0.5");
-  const [mode, setMode] = useState("std");
+  const [mode, setMode] = useState("pro");
   
   // Processing State
   const [isUploading, setIsUploading] = useState(false);
@@ -67,12 +67,7 @@ export default function Kling() {
     if (taskId && isProcessing) {
       intervalId = setInterval(async () => {
         try {
-          const apiKey = import.meta.env.VITE_PI_API_KEY;
-          const res = await fetch(`https://api.piapi.ai/api/v1/task/${taskId}`, {
-             headers: {
-                "x-api-key": apiKey
-             }
-          });
+          const res = await fetch(`/api/piapi/kling/task/${taskId}`);
           const data: PiApiTaskResponse = await res.json();
 
           if (data.code === 200) {
@@ -150,34 +145,21 @@ export default function Kling() {
       setStatus("Submitting task...");
 
       // 2. Submit Task to PiAPI (via Proxy)
-      // 2. Submit Task to PiAPI (Direct Client Side)
+      // 2. Submit Task to PiAPI (via Proxy)
       const payload = {
-        model: "kling",
-        task_type: "video_generation",
-        input: {
-          prompt,
-          negative_prompt: negativePrompt,
-          cfg_scale: parseFloat(cfgScale),
-          duration: parseInt(duration),
-          image_url: startImageUrl,
-          image_tail_url: endImageUrl,
-          mode,
-          version: "2.5"
-        }
+        prompt,
+        negative_prompt: negativePrompt,
+        cfg_scale: parseFloat(cfgScale),
+        duration: parseInt(duration),
+        image_url: startImageUrl,
+        image_tail_url: endImageUrl,
+        mode,
+        version: "2.5"
       };
 
-      const apiKey = import.meta.env.VITE_PI_API_KEY || "your_api_key_here";
-      if (!apiKey || apiKey === "your_api_key_here") {
-          toast.error("VITE_PI_API_KEY is missing in .env");
-          throw new Error("Missing API Key");
-      }
-
-      const res = await fetch("https://api.piapi.ai/api/v1/task", {
+      const res = await fetch("/api/piapi/kling/task", {
         method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "x-api-key": apiKey
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
@@ -294,8 +276,8 @@ export default function Kling() {
                     value={mode}
                     onChange={(e) => setMode(e.target.value)}
                 >
-                    <option value="std">Standard</option>
                     <option value="pro">Pro (Professional)</option>
+                    <option value="std">Standard</option>
                 </select>
               </div>
             </div>
