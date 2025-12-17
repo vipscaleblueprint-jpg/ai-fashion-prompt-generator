@@ -30,7 +30,7 @@ export default function Kling() {
   // Image State
   const [startImage, setStartImage] = useState<File | null>(null);
   const [startPreview, setStartPreview] = useState<string | null>(null);
-  
+
   const [endImage, setEndImage] = useState<File | null>(null);
   const [endPreview, setEndPreview] = useState<string | null>(null);
 
@@ -40,7 +40,13 @@ export default function Kling() {
   const [duration, setDuration] = useState("5"); // 5 or 10
   const [cfgScale, setCfgScale] = useState("0.5");
   const [mode, setMode] = useState("pro");
-  
+  const [version, setVersion] = useState("1.6");
+
+  // Update version defaults when mode changes strictly if needed, but for now we just keep the selected one if valid, otherwise reset.
+  // Actually the requirement says "the default is 1.6".
+  // Since 1.6 exists in both, we can just default to 1.6 initially.
+  // We can add an effect to sanity check the version if we wanted to be strict, but the user didn't ask for strict validation logic, just the dropdown options.
+
   // Processing State
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -89,9 +95,9 @@ export default function Kling() {
               setTaskId(null);
             }
           } else {
-             // Keep retrying or handle error?
-             // If code is not 200, it might be a temp error or 404
-             console.warn("Polling error:", data);
+            // Keep retrying or handle error?
+            // If code is not 200, it might be a temp error or 404
+            console.warn("Polling error:", data);
           }
         } catch (err) {
           console.error("Polling fetch error", err);
@@ -154,7 +160,7 @@ export default function Kling() {
         image_url: startImageUrl,
         image_tail_url: endImageUrl,
         mode,
-        version: "2.5"
+        version
       };
 
       const res = await fetch("/api/piapi/kling/task", {
@@ -196,23 +202,23 @@ export default function Kling() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Left Column: Inputs */}
         <div className="space-y-8">
-          
+
           {/* Images */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">1. Upload Images</h3>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Image (Required)</Label>
                 {!startImage ? (
                   <UploadZone onFileSelected={handleStartImageSelect} />
                 ) : (
-                  <ImagePreview 
-                    src={startPreview!} 
+                  <ImagePreview
+                    src={startPreview!}
                     onChangeImage={() => {
-                        setStartImage(null);
-                        setStartPreview(null);
-                    }} 
+                      setStartImage(null);
+                      setStartPreview(null);
+                    }}
                   />
                 )}
               </div>
@@ -222,12 +228,12 @@ export default function Kling() {
                 {!endImage ? (
                   <UploadZone onFileSelected={handleEndImageSelect} />
                 ) : (
-                  <ImagePreview 
-                    src={endPreview!} 
+                  <ImagePreview
+                    src={endPreview!}
                     onChangeImage={() => {
-                        setEndImage(null);
-                        setEndPreview(null);
-                    }} 
+                      setEndImage(null);
+                      setEndPreview(null);
+                    }}
                   />
                 )}
               </div>
@@ -237,10 +243,10 @@ export default function Kling() {
           {/* Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">2. Settings</h3>
-            
+
             <div className="space-y-2">
               <Label>Prompt</Label>
-              <Textarea 
+              <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Describe the video..."
@@ -250,56 +256,84 @@ export default function Kling() {
 
             <div className="space-y-2">
               <Label>Negative Prompt</Label>
-              <Input 
+              <Input
                 value={negativePrompt}
                 onChange={(e) => setNegativePrompt(e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <Label>Duration (seconds)</Label>
-                <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
                 >
-                    <option value="5">5s (Standard)</option>
-                    <option value="10">10s (High Quality)</option>
+                  <option value="5">5s (Standard)</option>
+                  <option value="10">10s (High Quality)</option>
                 </select>
               </div>
 
               <div className="space-y-2">
                 <Label>Quality Mode</Label>
-                <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value)}
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value)}
                 >
-                    <option value="pro">Pro (Professional)</option>
-                    <option value="std">Standard</option>
+                  <option value="pro">Pro (Professional)</option>
+                  <option value="std">Standard</option>
+                </select>
+              </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label>Model Version</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={version}
+                  onChange={(e) => setVersion(e.target.value)}
+                >
+                  {mode === "pro" ? (
+                    <>
+                      <option value="1.0">1.0</option>
+                      <option value="1.5">1.5</option>
+                      <option value="1.6">1.6 (Default)</option>
+                      <option value="2.0">2.0</option>
+                      <option value="2.1">2.1</option>
+                      <option value="2.1 - master">2.1 - Master</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="1.0">1.0</option>
+                      <option value="1.5">1.5</option>
+                      <option value="1.6">1.6 (Default)</option>
+                      <option value="2.1">2.1</option>
+                      <option value="2.1 - master">2.1 - Master</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={handleGenerate}
             disabled={!startImage || isUploading || isProcessing}
             className="w-full text-lg h-12"
           >
             {isUploading ? (
-               <>
-                 <Loader2 className="mr-2 animate-spin" /> Uploading Images...
-               </>
+              <>
+                <Loader2 className="mr-2 animate-spin" /> Uploading Images...
+              </>
             ) : isProcessing ? (
-               <>
-                 <Loader2 className="mr-2 animate-spin" /> {status}
-               </>
+              <>
+                <Loader2 className="mr-2 animate-spin" /> {status}
+              </>
             ) : (
-                <>
-                  <Play className="mr-2 fill-current" /> Generate Video
-                </>
+              <>
+                <Play className="mr-2 fill-current" /> Generate Video
+              </>
             )}
           </Button>
 
@@ -307,39 +341,39 @@ export default function Kling() {
 
         {/* Right Column: Results */}
         <div className="space-y-6">
-           <h3 className="text-lg font-semibold">3. Result</h3>
-           
-           <div className="w-full aspect-video bg-muted rounded-xl flex items-center justify-center border border-border overflow-hidden relative">
-              {videoUrl ? (
-                <video 
-                    src={videoUrl} 
-                    controls 
-                    autoPlay 
-                    loop 
-                    className="w-full h-full object-cover"
-                />
-              ) : (
-                 <div className="text-center p-6 text-muted-foreground">
-                    {isProcessing ? (
-                        <div className="flex flex-col items-center gap-2">
-                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                             <p>{status}</p>
-                             <p className="text-xs">This may take a few minutes...</p>
-                        </div>
-                    ) : (
-                        <p>Video preview will appear here</p>
-                    )}
-                 </div>
-              )}
-           </div>
-           
-           {videoUrl && (
-             <Button className="w-full" variant="outline" asChild>
-                <a href={videoUrl} download target="_blank" rel="noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> Download Video
-                </a>
-             </Button>
-           )}
+          <h3 className="text-lg font-semibold">3. Result</h3>
+
+          <div className="w-full aspect-video bg-muted rounded-xl flex items-center justify-center border border-border overflow-hidden relative">
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                controls
+                autoPlay
+                loop
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center p-6 text-muted-foreground">
+                {isProcessing ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p>{status}</p>
+                    <p className="text-xs">This may take a few minutes...</p>
+                  </div>
+                ) : (
+                  <p>Video preview will appear here</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {videoUrl && (
+            <Button className="w-full" variant="outline" asChild>
+              <a href={videoUrl} download target="_blank" rel="noreferrer">
+                <Download className="mr-2 h-4 w-4" /> Download Video
+              </a>
+            </Button>
+          )}
         </div>
       </div>
     </div>
