@@ -16,11 +16,15 @@ router.post('/', async (req, res) => {
 
 // Read All
 router.get('/', async (req, res) => {
+    console.log('[API] /broll-scene hit');
     try {
+        console.log('[API] Fetching all Broll Scenes...');
         const items = await BrollScene.find().sort({ createdAt: -1 });
+        console.log(`[API] Found ${items.length} scenes`);
         res.json(items);
     } catch (error: any) {
-        res.status(500).json({ message: error.message });
+        console.error('[API] Error in /broll-scene:', error);
+        res.status(500).json({ message: error.message, detail: String(error) });
     }
 });
 
