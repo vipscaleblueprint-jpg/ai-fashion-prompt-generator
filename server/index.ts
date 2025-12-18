@@ -34,9 +34,9 @@ export function createServer() {
     res.json({ status: "sanity_ok", url: req.url });
   });
 
-  // Root Handler for Health Checks
-  app.get("/", (req, res) => {
-    console.log("[Server] Root Health Check");
+  // Root Handler for Health Checks - Moved to /api/health to avoid conflicting with frontend
+  app.get("/api/health", (req, res) => {
+    console.log("[Server] Health Check");
     res.status(200).json({ status: "ok", service: "baseimgtoprompt-api" });
   });
 

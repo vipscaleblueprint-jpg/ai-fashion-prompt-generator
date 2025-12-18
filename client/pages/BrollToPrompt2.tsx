@@ -5,6 +5,7 @@ import ImagePreview from "@/components/ImagePreview";
 import ResultsSection from "@/components/ResultsSection";
 import AdvancedSettings from "@/components/AdvancedSettings";
 import { handleBrollImageSubmission2, fetchFaceProfile } from "@/lib/broll-webhook";
+import { fetchMarketingClients, MarketingClient } from "@/lib/marketing-client-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
 import { Loader2, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -18,11 +19,12 @@ import {
 } from "@/components/ui/select";
 
 
-type MarketingClient = {
-    client_name: string;
-    clickup_id: string;
-    clockify_id: string;
-};
+// Local definition removed in favor of import
+// type MarketingClient = {
+//     client_name: string;
+//     clickup_id: string;
+//     clockify_id: string;
+// };
 
 export default function BrollToPrompt2() {
     const [file, setFile] = useState<File | null>(null);
@@ -139,16 +141,8 @@ export default function BrollToPrompt2() {
         const fetchClients = async () => {
             setIsLoadingClients(true);
             try {
-                const response = await fetch('/api/marketing-clients', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch clients');
-                }
-                const data = await response.json();
+                // Modified to use the new webhook-based fetcher
+                const data = await fetchMarketingClients();
                 setClientList(data);
             } catch (error) {
                 console.error("Error fetching clients:", error);
@@ -365,17 +359,17 @@ export default function BrollToPrompt2() {
             // Use the shared library function which handles the webhook directly
             const faceData = await fetchFaceProfile(value);
 
+            // Always update prompts, even if faceData is null (to clear previous client's data)
+            setPrompts(prev => {
+                // Logic: prompts[0] is Face, prompts[1] is Scene.
+                const scenePrompt = prev && prev[1] ? prev[1] : "";
+                return [faceData || "", scenePrompt];
+            });
+
             if (faceData) {
-                setPrompts(prev => {
-                    // Logic: prompts[0] is Face, prompts[1] is Scene.
-                    const scenePrompt = prev && prev[1] ? prev[1] : "";
-                    return [faceData, scenePrompt];
-                });
                 toast.success("Face profile loaded successfully");
             } else {
-                // Even if null, we might want to clear the prompt?
-                // Current logic only acts if faceData exists.
-                toast.error("No face profile found for this client");
+                toast.error("No face profile found for this client, face prompt cleared.");
             }
         } catch (e) {
             console.error(e);
