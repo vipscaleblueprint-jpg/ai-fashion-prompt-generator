@@ -53,6 +53,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             const data = await piResponse.json();
+
+            // Normalize response to ensure { code: 200, data: ... } structure
+            if (data && data.code === undefined && data.task_id) {
+                // It's an unwrapped task object
+                return res.status(piResponse.status).json({
+                    code: 200,
+                    data: data,
+                    message: "Success"
+                });
+            }
+
             return res.status(piResponse.status).json(data);
 
         } catch (fetchError: any) {

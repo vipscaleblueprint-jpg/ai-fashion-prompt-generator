@@ -82,6 +82,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // Pass through the response body
             const data = await piResponse.json();
+
+            // Normalize response if needed
+            if (data && data.code === undefined && data.task_id) {
+                return res.status(piResponse.status).json({
+                    code: 200,
+                    data: data,
+                    message: "Task Created"
+                });
+            }
+
             return res.status(piResponse.status).json(data);
 
         } catch (fetchError: any) {
