@@ -230,7 +230,7 @@ export default function BrollToPrompt3() {
             <section className="mb-10">
                 <div className="max-w-3xl space-y-3">
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                        Broll Scene Image Upload
+                        Broll Scene Image Uploader
                     </h1>
                     <p className="text-foreground/80 text-lg">
                         Upload single or multiple b-roll images to generate professional prompts
