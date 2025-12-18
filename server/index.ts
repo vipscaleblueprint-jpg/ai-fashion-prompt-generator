@@ -34,6 +34,12 @@ export function createServer() {
     res.json({ status: "sanity_ok", url: req.url });
   });
 
+  // Root Handler for Health Checks
+  app.get("/", (req, res) => {
+    console.log("[Server] Root Health Check");
+    res.status(200).json({ status: "ok", service: "baseimgtoprompt-api" });
+  });
+
   // 2. Middleware
   app.use(cors());
   app.use((req, res, next) => { console.log("[Server] STEP 2: CORS Passed"); next(); });

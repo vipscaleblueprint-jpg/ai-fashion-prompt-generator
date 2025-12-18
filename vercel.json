@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/piapi/kling/task",
+      "destination": "/api/kling-task"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },

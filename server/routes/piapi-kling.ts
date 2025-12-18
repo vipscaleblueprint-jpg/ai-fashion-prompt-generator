@@ -64,7 +64,7 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
         const timeoutId = setTimeout(() => {
             console.log("[Kling] Aborting request due to timeout");
             controller.abort();
-        }, 15000); // 15s timeout
+        }, 55000); // 55s timeout (safely inside Vercel's 60s)
 
         try {
             console.log("[Kling] Sending request to PiAPI...");
@@ -98,7 +98,7 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
             clearTimeout(timeoutId);
             console.error("[Kling] Fetch Error:", fetchError);
             if (fetchError.name === 'AbortError') {
-                return res.status(504).json({ code: 504, message: "Request to PiAPI timed out after 60s" });
+                return res.status(504).json({ code: 504, message: "Request to PiAPI timed out after 55s" });
             }
             throw fetchError;
         }
