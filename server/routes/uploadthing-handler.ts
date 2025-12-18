@@ -1,5 +1,5 @@
 import { createRouteHandler } from "uploadthing/express";
-import { ourFileRouter } from "./uploadthing";
+import { ourFileRouter } from "./uploadthing.js";
 
 /**
  * Express route handler for UploadThing

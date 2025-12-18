@@ -7,16 +7,16 @@ console.log("Loading .env from:", envPath);
 dotenv.config({ path: envPath });
 import express from "express";
 import cors from "cors";
-import { handleDemo } from "./routes/demo";
-import { handleProxyWebhook } from "./routes/proxy-webhook";
-import { handleProxySceneWebhook } from "./routes/proxy-scene-webhook";
-import { handleProxyBrollWebhook } from "./routes/proxy-broll-webhook";
-import { handleProxyGenerateImage } from "./routes/proxy-generate-image";
-import { uploadthingRouteHandler } from "./routes/uploadthing-handler";
-import { connectDB } from "./db";
-import brollSceneRouter from "./routes/broll-scene";
-import marketingClientsRouter from "./routes/marketing-clients";
-import { createKlingTask, getKlingTask } from "./routes/piapi-kling";
+import { handleDemo } from "./routes/demo.js";
+import { handleProxyWebhook } from "./routes/proxy-webhook.js";
+import { handleProxySceneWebhook } from "./routes/proxy-scene-webhook.js";
+import { handleProxyBrollWebhook } from "./routes/proxy-broll-webhook.js";
+import { handleProxyGenerateImage } from "./routes/proxy-generate-image.js";
+import { uploadthingRouteHandler } from "./routes/uploadthing-handler.js";
+import { connectDB } from "./db.js";
+import brollSceneRouter from "./routes/broll-scene.js";
+import marketingClientsRouter from "./routes/marketing-clients.js";
+import { createKlingTask, getKlingTask } from "./routes/piapi-kling.js";
 
 export function createServer() {
   const app = express();

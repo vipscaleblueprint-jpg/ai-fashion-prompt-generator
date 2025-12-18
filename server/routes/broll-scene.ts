@@ -1,5 +1,5 @@
 import express from 'express';
-import BrollScene from '../models/BrollScene';
+import BrollScene from '../models/BrollScene.js';
 
 const router = express.Router();
 

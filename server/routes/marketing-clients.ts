@@ -1,5 +1,5 @@
 import express from 'express';
-import MarketingClient from '../models/MarketingClient';
+import MarketingClient from '../models/MarketingClient.js';
 
 const router = express.Router();
 
