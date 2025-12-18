@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/piapi/kling/task/:taskId",
+      "destination": "/api/kling-status?taskId=:taskId"
+    },
+    {
       "source": "/api/piapi/kling/task",
       "destination": "/api/kling-task"
     },
