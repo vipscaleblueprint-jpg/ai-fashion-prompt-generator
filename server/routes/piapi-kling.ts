@@ -9,8 +9,11 @@ const PI_API_BASE_URL = "https://api.piapi.ai/api/v1";
  */
 function checkApiKey() {
     if (!PI_API_KEY) {
+        console.error("[Kling] PI_API_KEY is missing from environment variables!");
         throw new Error("PI_API_KEY is not configured in the server environment.");
     }
+    const keyPreview = PI_API_KEY.substring(0, 4) + "****" + PI_API_KEY.substring(PI_API_KEY.length - 4);
+    console.log(`[Kling] API Key Check Passed (Key: ${keyPreview})`);
 }
 
 /**
@@ -102,7 +105,10 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
 
     } catch (error: any) {
         console.error("PiAPI Create Error:", error);
-        res.status(500).json({ code: 500, message: error.message || "Internal Server Error" });
+        // Ensure we always return JSON, even for unknown errors, to prevent 500 pages
+        if (!res.headersSent) {
+            res.status(500).json({ code: 500, message: error.message || "Internal Server Error" });
+        }
     }
 };
 
