@@ -20,6 +20,10 @@
       "destination": "/api/kling"
     },
     {
+      "source": "/api/kling-task",
+      "destination": "/api/kling"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
