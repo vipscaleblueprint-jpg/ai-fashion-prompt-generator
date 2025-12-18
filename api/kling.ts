@@ -54,10 +54,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // --- POST: Create Task ---
         if (req.method === 'POST') {
+            let body = req.body;
+            if (typeof body === 'string') {
+                try {
+                    body = JSON.parse(body);
+                } catch (e) {
+                    console.error("[Kling] Failed to parse body string:", body);
+                    return res.status(400).json({ code: 400, message: "Invalid JSON body" });
+                }
+            }
+
             const {
                 prompt, negative_prompt, cfg_scale, duration,
                 image_url, image_tail_url, mode, version
-            } = req.body || {};
+            } = body || {};
+
+            console.log("[Kling] Incoming Payload:", { prompt, mode, version, duration, cfg_scale, image_url });
 
             if (!image_url) return res.status(400).json({ code: 400, message: "image_url is required" });
 
@@ -75,6 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     version: version || "1.6"
                 }
             };
+
+            console.log("[Kling] Sending to PiAPI:", JSON.stringify(payload));
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s
