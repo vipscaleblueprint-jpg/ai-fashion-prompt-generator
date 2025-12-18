@@ -33,7 +33,7 @@ export function createServer() {
 
     // Defer DB Connection to request time to ensure logging works first
     try {
-      if (req.url.startsWith('/api') && !req.url.includes('uploadthing')) {
+      if (req.url.startsWith('/api') && !req.url.includes('uploadthing') && !req.url.startsWith('/api/piapi')) {
         console.log("[Server] Ensuring DB connection...");
         await connectDB();
         console.log("[Server] DB connection healthy");
