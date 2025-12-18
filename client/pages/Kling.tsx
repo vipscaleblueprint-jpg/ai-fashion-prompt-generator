@@ -73,7 +73,7 @@ export default function Kling() {
     if (taskId && isProcessing) {
       intervalId = setInterval(async () => {
         try {
-          const res = await fetch(`/api/piapi/kling/task/${taskId}`);
+          const res = await fetch(`/api/kling-status?taskId=${taskId}`);
           const data: PiApiTaskResponse = await res.json();
 
           if (data.code === 200) {
@@ -164,7 +164,7 @@ export default function Kling() {
       };
 
       console.log("[Client] Submitting task payload:", payload);
-      const res = await fetch("/api/piapi/kling/task", {
+      const res = await fetch("/api/kling-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
