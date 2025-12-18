@@ -58,7 +58,10 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
         console.log("Creating Kling Task with payload:", JSON.stringify(payload, null, 2));
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+        const timeoutId = setTimeout(() => {
+            console.log("[Kling] Aborting request due to timeout");
+            controller.abort();
+        }, 15000); // 15s timeout
 
         try {
             console.log("[Kling] Sending request to PiAPI...");
