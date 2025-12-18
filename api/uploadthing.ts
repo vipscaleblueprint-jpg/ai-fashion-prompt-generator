@@ -9,7 +9,7 @@ const f = createUploadthing();
  * Define your upload endpoints here
  */
 const ourFileRouter = {
-    imageUploader: f({ image: { maxFileSize: "16MB" } })
+    imageUploader: f({ image: { maxFileSize: "16MB", maxFileCount: 2 } })
         .middleware(async ({ req }) => {
             // You can add authentication logic here if needed
             return { userId: "anonymous" };
