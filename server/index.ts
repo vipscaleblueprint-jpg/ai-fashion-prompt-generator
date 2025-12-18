@@ -19,12 +19,8 @@ import marketingClientsRouter from "./routes/marketing-clients.js";
 import { createKlingTask, getKlingTask } from "./routes/piapi-kling.js";
 
 export function createServer() {
+  console.log("[Server] createServer() called - initializing Express app");
   const app = express();
-
-
-
-  // Connect to MongoDB
-  connectDB();
 
 
 
@@ -32,9 +28,22 @@ export function createServer() {
   app.use(cors());
 
   // Request Logger
-  app.use((req, res, next) => {
-    console.log(`[Server] ${req.method} ${req.url}`);
-    next();
+  app.use(async (req, res, next) => {
+    console.log(`[Server] Request received: ${req.method} ${req.url}`);
+
+    // Defer DB Connection to request time to ensure logging works first
+    try {
+      if (req.url.startsWith('/api') && !req.url.includes('uploadthing')) {
+        console.log("[Server] Ensuring DB connection...");
+        await connectDB();
+        console.log("[Server] DB connection healthy");
+      }
+      next();
+    } catch (e) {
+      console.error("[Server] DB Connection Failed in middleware:", e);
+      // Don't crash, let it proceed to route handler which might fail but logs will show
+      next();
+    }
   });
 
   app.use(express.json());
