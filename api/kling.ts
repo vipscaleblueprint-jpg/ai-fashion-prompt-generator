@@ -66,10 +66,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             const {
                 prompt, negative_prompt, cfg_scale, duration,
-                image_url, image_tail_url, mode, version
+                image_url, image_tail_url, mode, version, aspect_ratio
             } = body || {};
 
-            console.log("[Kling] Incoming Payload:", { prompt, mode, version, duration, cfg_scale, image_url });
+            console.log("[Kling] Incoming Payload:", { prompt, mode, version, duration, cfg_scale, aspect_ratio, image_url });
 
             if (!image_url) return res.status(400).json({ code: 400, message: "image_url is required" });
 
@@ -81,10 +81,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     negative_prompt: negative_prompt || "blur, jitter, artifacts, distortion",
                     cfg_scale: Number(cfg_scale) || 0.5,
                     duration: Number(duration) || 5,
+                    aspect_ratio: aspect_ratio || "16:9",
                     image_url,
                     image_tail_url: image_tail_url || undefined,
                     mode: mode || "std",
                     version: version || "1.6"
+                },
+                config: {
+                    service_mode: "",
+                    webhook_config: {
+                        endpoint: "",
+                        secret: ""
+                    }
                 }
             };
 
