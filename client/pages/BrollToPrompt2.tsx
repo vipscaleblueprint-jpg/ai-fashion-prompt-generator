@@ -410,7 +410,7 @@ export default function BrollToPrompt2() {
             <section className="mb-10">
                 <div className="max-w-3xl space-y-3">
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                        B-Roll Image to Prompt 2.0
+                        B-Roll Scene Image to Prompt 2.0
                     </h1>
                     <p className="text-foreground/80 text-lg">
                         Transform your b-roll images into professional photography prompts
