@@ -22,32 +22,33 @@ export function createServer() {
   console.log("[Server] createServer() called - initializing Express app");
   const app = express();
 
-
-
-  // Middleware
-  app.use(cors());
-
-  // Request Logger
-  app.use(async (req, res, next) => {
-    console.log(`[Server] Request received: ${req.method} ${req.url}`);
-
-    // Defer DB Connection to request time to ensure logging works first
-    try {
-      if (req.url.startsWith('/api') && !req.url.includes('uploadthing') && !req.url.startsWith('/api/piapi')) {
-        console.log("[Server] Ensuring DB connection...");
-        await connectDB();
-        console.log("[Server] DB connection healthy");
-      }
-      next();
-    } catch (e) {
-      console.error("[Server] DB Connection Failed in middleware:", e);
-      // Don't crash, let it proceed to route handler which might fail but logs will show
-      next();
-    }
+  // 1. Top-Level Logger (Before CORS/Parsing)
+  app.use((req, res, next) => {
+    // Log both to see if Vercel strips prefixes
+    console.log(`[Server] INCOMING: ${req.method} ${req.url} (original: ${req.originalUrl})`);
+    next();
   });
 
+  // 2. Middleware
+  app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // 3. Deferred DB Connection
+  app.use(async (req, res, next) => {
+    // Skip DB for uploadthing AND Kling (independent APIs)
+    const isDBFree = req.url.includes('uploadthing') || req.url.includes('piapi');
+
+    if (req.url.startsWith('/api') && !isDBFree) {
+      try {
+        console.log(`[Server] Ensuring DB connection for ${req.url}...`);
+        await connectDB();
+      } catch (e) {
+        console.error("[Server] DB Connection Failed:", e);
+      }
+    }
+    next();
+  });
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
