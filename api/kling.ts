@@ -67,8 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 input: {
                     prompt: prompt || "Smooth cinematic transition",
                     negative_prompt: negative_prompt || "blur, jitter, artifacts, distortion",
-                    cfg_scale: cfg_scale || 0.5,
-                    duration: duration || 5,
+                    cfg_scale: Number(cfg_scale) || 0.5,
+                    duration: Number(duration) || 5,
                     image_url,
                     image_tail_url: image_tail_url || undefined,
                     mode: mode || "std",
