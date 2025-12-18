@@ -36,8 +36,11 @@ export function createServer() {
 
   // 3. Deferred DB Connection
   app.use(async (req, res, next) => {
-    // Skip DB for uploadthing AND Kling (independent APIs)
-    const isDBFree = req.url.includes('uploadthing') || req.url.includes('piapi');
+    // Skip DB for uploadthing, Kling, ping, and demo (independent APIs)
+    const isDBFree = req.url.includes('uploadthing') ||
+      req.url.includes('piapi') ||
+      req.url.includes('ping') ||
+      req.url.includes('demo');
 
     if (req.url.startsWith('/api') && !isDBFree) {
       try {
