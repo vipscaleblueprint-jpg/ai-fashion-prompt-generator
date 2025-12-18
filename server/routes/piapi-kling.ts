@@ -20,6 +20,7 @@ function checkApiKey() {
  */
 export const createKlingTask = async (req: Request, res: ExpressResponse) => {
     try {
+        console.log("[Kling] Received Create Task Request");
         checkApiKey();
 
         const {
@@ -33,6 +34,8 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
             version
         } = req.body;
 
+        console.log("[Kling] Request Body parsed:", { prompt, mode, version, hasImageUrl: !!image_url });
+
         if (!image_url) {
             return res.status(400).json({ code: 400, message: "image_url is required" });
         }
@@ -43,30 +46,57 @@ export const createKlingTask = async (req: Request, res: ExpressResponse) => {
             input: {
                 prompt: prompt || "Smooth cinematic transition",
                 negative_prompt: negative_prompt || "blur, jitter, artifacts, distortion",
-                cfg_scale: cfg_scale || 0.5,
-                duration: duration || 5,
+                cfg_scale: cfg_scale || 0.5, // Ensure number
+                duration: duration || 5,      // Ensure number
                 image_url: image_url,
                 image_tail_url: image_tail_url || undefined,
                 mode: mode || "std",
-                version: version || "2.5"
+                version: version || "1.6"     // Default to 1.6 if missing
             }
         };
 
         console.log("Creating Kling Task with payload:", JSON.stringify(payload, null, 2));
 
-        const response = await fetch(`${PI_API_BASE_URL}/task`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": PI_API_KEY!
-            },
-            body: JSON.stringify(payload)
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-        const data = await response.json();
-        console.log("PiAPI Create Response:", data);
+        try {
+            console.log("[Kling] Sending request to PiAPI...");
+            const response = await fetch(`${PI_API_BASE_URL}/task`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": PI_API_KEY!
+                },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
-        res.status(response.status).json(data);
+            console.log(`[Kling] PiAPI Response Status: ${response.status}`);
+
+            const text = await response.text();
+            console.log(`[Kling] PiAPI Raw Response: ${text.substring(0, 500)}`); // Log first 500 chars
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error("[Kling] Failed to parse JSON response:", e);
+                return res.status(502).json({ code: 502, message: "Invalid JSON from PiAPI", detail: text });
+            }
+
+            res.status(response.status).json(data);
+
+        } catch (fetchError: any) {
+            clearTimeout(timeoutId);
+            console.error("[Kling] Fetch Error:", fetchError);
+            if (fetchError.name === 'AbortError') {
+                return res.status(504).json({ code: 504, message: "Request to PiAPI timed out after 60s" });
+            }
+            throw fetchError;
+        }
+
     } catch (error: any) {
         console.error("PiAPI Create Error:", error);
         res.status(500).json({ code: 500, message: error.message || "Internal Server Error" });
