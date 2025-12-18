@@ -151,7 +151,7 @@ export default function Kling() {
       setStatus("Submitting task...");
 
       // 2. Submit Task to PiAPI (via Proxy)
-      // 2. Submit Task to PiAPI (via Proxy)
+
       const payload = {
         prompt,
         negative_prompt: negativePrompt,
@@ -163,13 +163,16 @@ export default function Kling() {
         version
       };
 
+      console.log("[Client] Submitting task payload:", payload);
       const res = await fetch("/api/piapi/kling/task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
+      console.log("[Client] Response received:", res.status, res.statusText);
 
       const data: PiApiTaskResponse = await res.json();
+      console.log("[Client] Parsed response data:", data);
 
       if (data.code === 200 && data.data.task_id) {
         setTaskId(data.data.task_id);
