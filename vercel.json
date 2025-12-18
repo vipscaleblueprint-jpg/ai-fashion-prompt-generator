@@ -5,11 +5,19 @@
   "rewrites": [
     {
       "source": "/api/piapi/kling/task/:taskId",
-      "destination": "/api/kling-status?taskId=:taskId"
+      "destination": "/api/kling?taskId=:taskId"
     },
     {
       "source": "/api/piapi/kling/task",
-      "destination": "/api/kling-task"
+      "destination": "/api/kling"
+    },
+    {
+      "source": "/api/kling-status",
+      "destination": "/api/kling"
+    },
+    {
+      "source": "/api/kling-task",
+      "destination": "/api/kling"
     },
     {
       "source": "/api/(.*)",
