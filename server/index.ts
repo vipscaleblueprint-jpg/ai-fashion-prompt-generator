@@ -22,33 +22,48 @@ export function createServer() {
   console.log("[Server] createServer() called - initializing Express app");
   const app = express();
 
-  // 1. Top-Level Logger (Before CORS/Parsing)
+  // 1. Top-Level Logger
   app.use((req, res, next) => {
-    // Log both to see if Vercel strips prefixes
-    console.log(`[Server] INCOMING: ${req.method} ${req.url} (original: ${req.originalUrl})`);
+    console.log(`[Server] STEP 1: INCOMING ${req.method} ${req.url}`);
     next();
+  });
+
+  // 1.5 Sanity Route (No Middleware)
+  app.get('/api/sanity', (req, res) => {
+    console.log("[Server] HIT SANITY ROUTE");
+    res.json({ status: "sanity_ok", url: req.url });
   });
 
   // 2. Middleware
   app.use(cors());
+  app.use((req, res, next) => { console.log("[Server] STEP 2: CORS Passed"); next(); });
+
   app.use(express.json());
+  app.use((req, res, next) => { console.log("[Server] STEP 3: JSON Parser Passed"); next(); });
+
   app.use(express.urlencoded({ extended: true }));
 
   // 3. Deferred DB Connection
   app.use(async (req, res, next) => {
+    console.log(`[Server] STEP 4: DB Check for ${req.url}`);
+
     // Skip DB for uploadthing, Kling, ping, and demo (independent APIs)
     const isDBFree = req.url.includes('uploadthing') ||
       req.url.includes('piapi') ||
       req.url.includes('ping') ||
+      req.url.includes('sanity') ||
       req.url.includes('demo');
 
     if (req.url.startsWith('/api') && !isDBFree) {
       try {
         console.log(`[Server] Ensuring DB connection for ${req.url}...`);
         await connectDB();
+        console.log("[Server] DB Connected");
       } catch (e) {
         console.error("[Server] DB Connection Failed:", e);
       }
+    } else {
+      console.log(`[Server] Skipping DB connection (isDBFree=${isDBFree})`);
     }
     next();
   });
