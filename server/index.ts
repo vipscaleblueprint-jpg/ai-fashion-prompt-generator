@@ -12,6 +12,7 @@ import { handleProxyWebhook } from "./routes/proxy-webhook.js";
 import { handleProxySceneWebhook } from "./routes/proxy-scene-webhook.js";
 import { handleProxyBrollWebhook } from "./routes/proxy-broll-webhook.js";
 import { handleProxyGenerateImage } from "./routes/proxy-generate-image.js";
+import { handleProxyOutfitAnalyzerWebhook } from "./routes/proxy-outfit-analyzer-webhook.js";
 import { uploadthingRouteHandler } from "./routes/uploadthing-handler.js";
 import { connectDB } from "./db.js";
 import brollSceneRouter from "./routes/broll-scene.js";
@@ -86,6 +87,7 @@ export function createServer() {
   app.post("/api/proxy-scene-webhook", handleProxySceneWebhook);
   app.post("/api/proxy-broll-webhook", handleProxyBrollWebhook);
   app.post("/api/proxy-generate-image", handleProxyGenerateImage);
+  app.post("/api/proxy-outfit-analyzer-webhook", handleProxyOutfitAnalyzerWebhook);
 
   // PiAPI Kling Routes
   // const { createKlingTask, getKlingTask } = require("./routes/piapi-kling");

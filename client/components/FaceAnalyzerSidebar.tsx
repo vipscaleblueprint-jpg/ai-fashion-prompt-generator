@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ScanFace } from "lucide-react";
+import { ScanFace, Shirt } from "lucide-react";
 
 export function FaceAnalyzerSidebar() {
     const location = useLocation();
@@ -10,6 +10,11 @@ export function FaceAnalyzerSidebar() {
             label: "Face Analyzer",
             to: "/face-analyzer",
             icon: ScanFace,
+        },
+        {
+            label: "Outfit Analyzer",
+            to: "/outfit-analyzer",
+            icon: Shirt,
         },
         // Future items can be added here
     ];

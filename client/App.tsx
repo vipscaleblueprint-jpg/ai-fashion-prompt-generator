@@ -22,6 +22,7 @@ import Terms from "./pages/Terms";
 import Support from "./pages/Support";
 import History from "./pages/History";
 import FaceAnalyzer from "./pages/FaceAnalyzer";
+import OutfitAnalyzer from "./pages/OutfitAnalyzer";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Kling from "./pages/Kling";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/history" element={<History />} />
               <Route path="/face-analyzer" element={<FaceAnalyzer />} />
+              <Route path="/outfit-analyzer" element={<OutfitAnalyzer />} />
               <Route path="/kling" element={<Kling />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
