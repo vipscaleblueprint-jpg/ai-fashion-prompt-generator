@@ -35,6 +35,7 @@ export default function Header() {
         { to: "/fake-avatar-generator", label: "Fake Avatar Generator" },
         { to: "/face-analyzer", label: "Analyzers" },
         { to: "/kling", label: "Kling" },
+        { to: "/fashion-randomizer", label: "Fashion Randomizer" },
       ],
     },
     { to: "/how-it-works", label: "How It Works" },

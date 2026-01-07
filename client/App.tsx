@@ -25,6 +25,7 @@ import FaceAnalyzer from "./pages/FaceAnalyzer";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Kling from "./pages/Kling";
+import FashionRandomizer from "./pages/FashionRandomizer";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/history" element={<History />} />
               <Route path="/face-analyzer" element={<FaceAnalyzer />} />
               <Route path="/kling" element={<Kling />} />
+              <Route path="/fashion-randomizer" element={<FashionRandomizer />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

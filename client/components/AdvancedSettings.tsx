@@ -111,6 +111,7 @@ const ETHNICITIES = [
 ];
 
 export interface AdvancedSettingsProps {
+    mode?: string;
     ethnicity: string;
     setEthnicity: (value: string) => void;
     gender: string;
@@ -149,6 +150,7 @@ export interface AdvancedSettingsProps {
 }
 
 export default function AdvancedSettings({
+    mode,
     ethnicity,
     setEthnicity,
     gender,
@@ -433,10 +435,10 @@ export default function AdvancedSettings({
                                 </div>
                             </div>
 
-                            {transformHead && (
+                            {(transformHead || mode === "model-angle") && (
                                 <div className="space-y-2 sm:col-span-2">
                                     <Label htmlFor="angle">Angle</Label>
-                                    <Select value={angle} onValueChange={setAngle} disabled={!transformHead}>
+                                    <Select value={angle} onValueChange={setAngle} disabled={!transformHead && mode !== "model-angle"}>
                                         <SelectTrigger id="angle">
                                             <SelectValue placeholder="Select Angle" />
                                         </SelectTrigger>

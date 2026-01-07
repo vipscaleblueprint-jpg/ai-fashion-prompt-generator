@@ -48,11 +48,7 @@ export interface AdvancedSettingsAlwaysOpenProps {
     setMouth: (value: string) => void;
     ears: string;
     setEars: (value: string) => void;
-    // Transform Head
-    transformHead: boolean;
-    setTransformHead: (value: boolean) => void;
-    angle: string;
-    setAngle: (value: string) => void;
+
     // Background Environment
     backgroundEnvironment: string;
     setBackgroundEnvironment: (value: string) => void;
@@ -88,10 +84,7 @@ export default function AdvancedSettingsAlwaysOpen({
     setMouth,
     ears,
     setEars,
-    transformHead,
-    setTransformHead,
-    angle,
-    setAngle,
+
     backgroundEnvironment,
     setBackgroundEnvironment,
     pose,
@@ -348,38 +341,7 @@ export default function AdvancedSettingsAlwaysOpen({
                             </>
                         )}
 
-                        <div className="space-y-2 sm:col-span-2">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="transformHead"
-                                    checked={transformHead}
-                                    onCheckedChange={(checked) => setTransformHead(checked === true)}
-                                />
-                                <Label
-                                    htmlFor="transformHead"
-                                    className="text-base font-medium cursor-pointer"
-                                >
-                                    Enable Transform Head
-                                </Label>
-                            </div>
-                        </div>
 
-                        {transformHead && (
-                            <div className="space-y-2 sm:col-span-2">
-                                <Label htmlFor="angle">Angle</Label>
-                                <Select value={angle} onValueChange={setAngle} disabled={!transformHead}>
-                                    <SelectTrigger id="angle">
-                                        <SelectValue placeholder="Select Angle" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="close-up">Close-Up</SelectItem>
-                                        <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
-                                        <SelectItem value="wide-close-up">Wide Close-Up</SelectItem>
-                                        <SelectItem value="full-body">Full-Body</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
 
                         <div className="space-y-2 sm:col-span-2">
                             <Label htmlFor="bodyComposition">Body Composition <span className="text-destructive">*</span></Label>

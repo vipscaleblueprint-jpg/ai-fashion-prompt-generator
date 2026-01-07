@@ -204,11 +204,13 @@ export default function Generator() {
               <SelectContent>
                 <SelectItem value="default">Default</SelectItem>
                 <SelectItem value="editorial-portrait">Editorial Portrait</SelectItem>
+                <SelectItem value="model-angle">Model Angle</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <AdvancedSettings
+            mode={mode}
             ethnicity={ethnicity}
             setEthnicity={setEthnicity}
             gender={gender}

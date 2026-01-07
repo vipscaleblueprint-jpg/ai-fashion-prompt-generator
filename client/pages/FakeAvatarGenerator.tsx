@@ -27,9 +27,7 @@ export default function FakeAvatarGenerator() {
     const [nose, setNose] = useState("");
     const [mouth, setMouth] = useState("");
     const [ears, setEars] = useState("");
-    // Transform Head
-    const [transformHead, setTransformHead] = useState(false);
-    const [angle, setAngle] = useState("");
+
     // Background Environment
     const [backgroundEnvironment, setBackgroundEnvironment] = useState("");
 
@@ -99,8 +97,7 @@ export default function FakeAvatarGenerator() {
                 nose,
                 mouth,
                 ears,
-                transformHead,
-                angle,
+
                 backgroundEnvironment,
             });
             // Only use the first prompt (1 variation)
@@ -168,10 +165,7 @@ export default function FakeAvatarGenerator() {
                     setMouth={setMouth}
                     ears={ears}
                     setEars={setEars}
-                    transformHead={transformHead}
-                    setTransformHead={setTransformHead}
-                    angle={angle}
-                    setAngle={setAngle}
+
                     backgroundEnvironment={backgroundEnvironment}
                     setBackgroundEnvironment={setBackgroundEnvironment}
                 />
