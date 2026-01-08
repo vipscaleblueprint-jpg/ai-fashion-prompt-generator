@@ -285,7 +285,7 @@ export default function BrollToPrompt2() {
                 mouth,
                 ears,
                 transformHead,
-                angle,
+                angle: angle || "default",
             });
 
             // Logic: prompts[0] is Face, prompts[1] is Scene.
@@ -528,6 +528,7 @@ export default function BrollToPrompt2() {
                     </div>
 
                     <AdvancedSettings
+                        mode="model-angle"
                         ethnicity={ethnicity}
                         setEthnicity={setEthnicity}
                         gender={gender}

@@ -1,5 +1,5 @@
 const DEFAULT_BROLL_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/broll-scene-images";
+  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts1";
 export const BROLL_WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL as string | undefined) ||
   DEFAULT_BROLL_WEBHOOK_URL;

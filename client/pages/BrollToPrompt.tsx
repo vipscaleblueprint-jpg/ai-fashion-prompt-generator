@@ -200,7 +200,7 @@ export default function BrollToPrompt() {
         mouth,
         ears,
         transformHead,
-        angle,
+        angle: angle || "default",
       });
       // Combine all prompts (if required) or show them separately.
       // User requested dynamic behavior: if 2 items, show separate prompts.
@@ -392,6 +392,7 @@ export default function BrollToPrompt() {
 
         <div className="space-y-6">
           <AdvancedSettings
+            mode="model-angle"
             ethnicity={ethnicity}
             setEthnicity={setEthnicity}
             gender={gender}
