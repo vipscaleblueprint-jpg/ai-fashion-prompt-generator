@@ -27,6 +27,7 @@ export default function Header() {
       label: "Generators",
       children: [
         { to: "/generate", label: "Fashion to Prompt" },
+        { to: "/fashion-randomizer", label: "Fashion Randomizer" },
         { to: "/scene-to-prompt", label: "Scene to Prompt" },
         { to: "/scene-text-to-prompt", label: "Scene Text to Prompt" },
         { to: "/broll-to-prompt", label: "B-Roll Scene to Prompt" },
@@ -35,7 +36,7 @@ export default function Header() {
         { to: "/fake-avatar-generator", label: "Fake Avatar Generator" },
         { to: "/face-analyzer", label: "Analyzers" },
         { to: "/kling", label: "Kling" },
-        { to: "/fashion-randomizer", label: "Fashion Randomizer" },
+
       ],
     },
     { to: "/how-it-works", label: "How It Works" },
