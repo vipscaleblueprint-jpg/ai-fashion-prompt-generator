@@ -16,7 +16,6 @@ import { uploadthingRouteHandler } from "./routes/uploadthing-handler.js";
 import { connectDB } from "./db.js";
 import brollSceneRouter from "./routes/broll-scene.js";
 import marketingClientsRouter from "./routes/marketing-clients.js";
-import faceAnalysisRouter from "./routes/face-analysis.js";
 import { createKlingTask, getKlingTask } from "./routes/piapi-kling.js";
 
 export function createServer() {
@@ -99,9 +98,6 @@ export function createServer() {
 
   // Marketing Clients Routes
   app.use("/api/marketing-clients", marketingClientsRouter);
-
-  // Face Analysis Routes
-  app.use("/api/face-analysis", faceAnalysisRouter);
 
   return app;
 }

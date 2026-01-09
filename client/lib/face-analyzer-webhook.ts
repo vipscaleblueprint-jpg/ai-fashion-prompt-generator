@@ -7,7 +7,8 @@ export const FACE_ANALYZER_WEBHOOK_URL: string =
     ((import.meta as any)?.env?.VITE_FACE_ANALYZER_WEBHOOK_URL as string | undefined) ||
     DEFAULT_SUBMISSION_WEBHOOK_URL;
 
-
+export const APPEND_SHEET_WEBHOOK_URL =
+    "https://n8n.srv1151765.hstgr.cloud/webhook/append-sheet";
 
 type LegacyWebhookPromptItem = { prompt: string };
 type LegacyWebhookResponse = { input: LegacyWebhookPromptItem[] };
@@ -133,29 +134,27 @@ export async function handleFaceAnalyzerSubmission(
     return prompts;
 }
 
-export async function saveFaceAnalysis(
+export async function updateSheet(
     client: string,
-    prompts: string[]
+    prompt: string
 ): Promise<boolean> {
+    const formData = new FormData();
+    formData.append("client", client);
+    formData.append("prompt", prompt);
+
     try {
-        const res = await fetch("/api/face-analysis", {
+        const res = await fetch(APPEND_SHEET_WEBHOOK_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                clientName: client,
-                prompts: prompts,
-            }),
+            body: formData,
         });
 
         if (!res.ok) {
-            console.error(`Face analysis save failed: ${res.status}`);
+            console.error(`Sheet update failed: ${res.status}`);
             return false;
         }
         return true;
     } catch (err) {
-        console.error("Error saving face analysis:", err);
+        console.error("Error updating sheet:", err);
         return false;
     }
 }

@@ -12,7 +12,7 @@ import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import ResultsSection from "@/components/ResultsSection";
 import { compressImage } from "@/lib/image";
-import { handleFaceAnalyzerSubmission, MARKETING_CLIENTS_WEBHOOK_URL, saveFaceAnalysis } from "@/lib/face-analyzer-webhook";
+import { handleFaceAnalyzerSubmission, MARKETING_CLIENTS_WEBHOOK_URL, updateSheet } from "@/lib/face-analyzer-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
 import { Loader2, X, ScanFace } from "lucide-react";
@@ -144,14 +144,14 @@ export default function FaceAnalyzer() {
 
         setIsUpdatingSheet(true);
         try {
-            const success = await saveFaceAnalysis(selectedClient, prompts);
+            const success = await updateSheet(selectedClient, prompts[0]);
             if (success) {
-                toast.success("Analysis saved successfully");
+                toast.success("Sheet updated successfully");
             } else {
-                toast.error("Failed to save analysis");
+                toast.error("Failed to update sheet");
             }
         } catch (error) {
-            toast.error("Error saving analysis");
+            toast.error("Error updating sheet");
             console.error(error);
         } finally {
             setIsUpdatingSheet(false);
@@ -215,10 +215,10 @@ export default function FaceAnalyzer() {
                             >
                                 {isUpdatingSheet ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating Sheet...
                                     </>
                                 ) : (
-                                    "Save Analysis"
+                                    "Update Sheet"
                                 )}
                             </Button>
                         )}
