@@ -86,7 +86,48 @@ export default function ResultsSection({
   useEffect(() => {
     // If we have a kling prompt, prioritize that!
     if (klingPrompt) {
-      setVideoSceneInput(klingPrompt);
+      // Parse the Kling prompt to extract negative prompt and scene content
+      const parseKlingPrompt = (prompt: string) => {
+        // Look for negative prompt markers (case-insensitive)
+        const negativeMarkers = [
+          /negative\s*prompt\s*[:：]\s*/i,
+          /negative\s*[:：]\s*/i,
+          /\[negative\s*prompt\]\s*[:：]?\s*/i,
+          /\[negative\]\s*[:：]?\s*/i
+        ];
+
+        let sceneContent = prompt;
+        let negativeContent = "";
+
+        for (const marker of negativeMarkers) {
+          const match = prompt.match(marker);
+          if (match) {
+            const splitIndex = match.index! + match[0].length;
+            const beforeNegative = prompt.substring(0, match.index!).trim();
+            const afterNegative = prompt.substring(splitIndex).trim();
+
+            // The negative prompt is everything after the marker
+            // Check if there's a newline or double newline that separates sections
+            const negativeEndMatch = afterNegative.match(/\n\n|\r\n\r\n/);
+            if (negativeEndMatch) {
+              negativeContent = afterNegative.substring(0, negativeEndMatch.index!).trim();
+              sceneContent = beforeNegative + "\n\n" + afterNegative.substring(negativeEndMatch.index! + negativeEndMatch[0].length).trim();
+            } else {
+              negativeContent = afterNegative;
+              sceneContent = beforeNegative;
+            }
+            break;
+          }
+        }
+
+        return { sceneContent, negativeContent };
+      };
+
+      const { sceneContent, negativeContent } = parseKlingPrompt(klingPrompt);
+      setVideoSceneInput(sceneContent);
+      if (negativeContent) {
+        setNegativePrompt(negativeContent);
+      }
     } else if (prompts && prompts.length > 0) {
       const combined = getCombinedPromptContent();
       setVideoSceneInput(combined);
