@@ -34,6 +34,9 @@ interface ResultsSectionProps {
       endFrame: File;
     }
   ) => void;
+  // Regeneration Props
+  onRegenerate?: () => void;
+  isLoading?: boolean;
 }
 
 function download(filename: string, content: string, type: string) {
@@ -59,7 +62,9 @@ export default function ResultsSection({
   isGeneratingKlingVideo,
   videoStatus,
   videoUrl,
-  onGenerateKlingVideo
+  onGenerateKlingVideo,
+  onRegenerate,
+  isLoading: isRegenerating
 }: ResultsSectionProps) {
   const hasPrompts = (prompts && prompts.length > 0);
   const showSection = hasPrompts || isFetchingFaceProfile;
@@ -212,6 +217,26 @@ export default function ResultsSection({
               Your Fashion Photography Prompt{prompts && prompts.length > 1 ? 's' : ''}
             </h2>
             <div className="flex items-center gap-2">
+              {onRegenerate && (
+                <Button
+                  variant="secondary"
+                  onClick={onRegenerate}
+                  disabled={isRegenerating}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                >
+                  {isRegenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Regenerate
+                    </>
+                  )}
+                </Button>
+              )}
               <Button variant="outline" onClick={handleDownloadText} disabled={!hasPrompts}>
                 Download as Text
               </Button>

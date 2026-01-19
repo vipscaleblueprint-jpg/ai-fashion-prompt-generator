@@ -71,6 +71,11 @@ export default function BrollToPrompt() {
   const [transformHead, setTransformHead] = useState(false);
   const [angle, setAngle] = useState("");
 
+  // Fashion Settings
+  const [fashionStyle, setFashionStyle] = useState("");
+  const [clothes, setClothes] = useState("");
+  const [clothesColor, setClothesColor] = useState("");
+
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -201,6 +206,9 @@ export default function BrollToPrompt() {
         ears,
         transformHead,
         angle: angle || "default",
+        fashionStyle,
+        clothes,
+        clothesColor,
       });
       // Combine all prompts (if required) or show them separately.
       // User requested dynamic behavior: if 2 items, show separate prompts.
@@ -423,6 +431,12 @@ export default function BrollToPrompt() {
             setTransformHead={setTransformHead}
             angle={angle}
             setAngle={setAngle}
+            fashionStyle={fashionStyle}
+            setFashionStyle={setFashionStyle}
+            clothes={clothes}
+            setClothes={setClothes}
+            clothesColor={clothesColor}
+            setClothesColor={setClothesColor}
           />
 
           {!prompts && (
@@ -487,6 +501,8 @@ export default function BrollToPrompt() {
               videoStatus={videoStatus}
               videoUrl={videoUrl}
               onGenerateKlingVideo={handleGenerateKlingVideo}
+              onRegenerate={handleGenerate}
+              isLoading={isLoading}
             />
           )}
         </div>

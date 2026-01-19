@@ -92,6 +92,9 @@ export async function handleBrollImageSubmission(
     transformHead?: boolean;
     angle?: string;
     pose?: string;
+    fashionStyle?: string;
+    clothes?: string;
+    clothesColor?: string;
   },
 ): Promise<string[]> {
   // BROLL_WEBHOOK_URL is always set via env or default
@@ -115,6 +118,9 @@ export async function handleBrollImageSubmission(
   if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
   if (opts?.angle) formData.append("angle", opts.angle);
   if (opts?.pose) formData.append("pose", opts.pose);
+  if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
+  if (opts?.clothes) formData.append("clothes", opts.clothes);
+  if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
 
   // Logic for "talking head enabled"
   // User allows "options under transform head" (e.g. angle) to be present,
@@ -134,6 +140,9 @@ export async function handleBrollImageSubmission(
     opts?.mouth,
     opts?.ears,
     opts?.pose,
+    opts?.fashionStyle,
+    opts?.clothes,
+    opts?.clothesColor,
   ].some(val => val && val.trim() !== "");
 
   if (opts?.transformHead && !hasTalkingHeadConflictingFields) {
@@ -158,6 +167,9 @@ export async function handleBrollImageSubmission(
     opts?.transformHead ? "true" : "",
     opts?.angle,
     opts?.pose,
+    opts?.fashionStyle,
+    opts?.clothes,
+    opts?.clothesColor,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {
@@ -251,6 +263,9 @@ export async function handleBrollImageSubmission2(
     transformHead?: boolean;
     angle?: string;
     pose?: string;
+    fashionStyle?: string;
+    clothes?: string;
+    clothesColor?: string;
   },
 ): Promise<string[]> {
   const formData = new FormData();
@@ -286,6 +301,9 @@ export async function handleBrollImageSubmission2(
     opts?.mouth,
     opts?.ears,
     opts?.pose,
+    opts?.fashionStyle,
+    opts?.clothes,
+    opts?.clothesColor,
   ].some(val => val && val.trim() !== "");
 
   if (opts?.transformHead && !hasTalkingHeadConflictingFields) {
@@ -310,6 +328,9 @@ export async function handleBrollImageSubmission2(
     opts?.transformHead ? "true" : "",
     opts?.angle,
     opts?.pose,
+    opts?.fashionStyle,
+    opts?.clothes,
+    opts?.clothesColor,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {

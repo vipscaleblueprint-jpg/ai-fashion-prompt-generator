@@ -323,12 +323,11 @@ export default function FashionRandomizer() {
 
                 {prompts && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <ResultsSection prompts={prompts} />
-                        <div className="flex justify-center mt-8">
-                            <Button variant="outline" onClick={resetAll}>
-                                Generate Another
-                            </Button>
-                        </div>
+                        <ResultsSection
+                            prompts={prompts}
+                            onRegenerate={handleGenerate}
+                            isLoading={isLoading}
+                        />
                     </div>
                 )}
             </div>

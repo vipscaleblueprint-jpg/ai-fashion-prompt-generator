@@ -58,6 +58,11 @@ export default function BrollToPrompt2() {
     const [transformHead, setTransformHead] = useState(false);
     const [angle, setAngle] = useState("");
 
+    // Fashion Settings
+    const [fashionStyle, setFashionStyle] = useState("");
+    const [clothes, setClothes] = useState("");
+    const [clothesColor, setClothesColor] = useState("");
+
     // Client List State
     const [selectedClient, setSelectedClient] = useState("");
     const [clientList, setClientList] = useState<MarketingClient[]>([]);
@@ -286,6 +291,9 @@ export default function BrollToPrompt2() {
                 ears,
                 transformHead,
                 angle: angle || "default",
+                fashionStyle,
+                clothes,
+                clothesColor,
             });
 
             // Logic: prompts[0] is Face, prompts[1] is Scene.
@@ -559,6 +567,12 @@ export default function BrollToPrompt2() {
                         setTransformHead={setTransformHead}
                         angle={angle}
                         setAngle={setAngle}
+                        fashionStyle={fashionStyle}
+                        setFashionStyle={setFashionStyle}
+                        clothes={clothes}
+                        setClothes={setClothes}
+                        clothesColor={clothesColor}
+                        setClothesColor={setClothesColor}
                     />
 
                     {(prompts || isFetchingFaceProfile) && (
@@ -568,6 +582,8 @@ export default function BrollToPrompt2() {
                             combinedPromptFooter="using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification."
                             isFetchingFaceProfile={isFetchingFaceProfile}
                             startFrameImage={file}
+                            onRegenerate={() => handleGenerate()}
+                            isLoading={isLoading}
                         />
                     )}
 

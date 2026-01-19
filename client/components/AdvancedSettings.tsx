@@ -147,6 +147,13 @@ export interface AdvancedSettingsProps {
     // Pose (Optional - only for main Generator)
     pose?: string;
     setPose?: (value: string) => void;
+    // Fashion Settings
+    fashionStyle: string;
+    setFashionStyle: (value: string) => void;
+    clothes: string;
+    setClothes: (value: string) => void;
+    clothesColor: string;
+    setClothesColor: (value: string) => void;
 }
 
 export default function AdvancedSettings({
@@ -183,6 +190,12 @@ export default function AdvancedSettings({
     setAngle,
     pose,
     setPose,
+    fashionStyle,
+    setFashionStyle,
+    clothes,
+    setClothes,
+    clothesColor,
+    setClothesColor,
 }: AdvancedSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
@@ -482,6 +495,48 @@ export default function AdvancedSettings({
                                     value={imperfection}
                                     onChange={(e) => setImperfection(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="space-y-4 sm:col-span-2 border-t pt-4 mt-2">
+                                <h3 className="text-sm font-bold text-foreground/80 uppercase tracking-wider">Fashion Settings</h3>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fashionStyle">Fashion Randomizer</Label>
+                                        <Select value={fashionStyle} onValueChange={setFashionStyle}>
+                                            <SelectTrigger id="fashionStyle">
+                                                <SelectValue placeholder="Select Style" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Casual">Casual</SelectItem>
+                                                <SelectItem value="Formal">Formal</SelectItem>
+                                                <SelectItem value="Casual Formal">Casual Formal</SelectItem>
+                                                <SelectItem value="Flora/Beach">Flora/Beach</SelectItem>
+                                                <SelectItem value="Vintage/Retro">Vintage/Retro</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="clothesColor">Clothes Color</Label>
+                                        <Input
+                                            id="clothesColor"
+                                            placeholder="e.g. Red, Navy Blue, Pastel Green"
+                                            value={clothesColor}
+                                            onChange={(e) => setClothesColor(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <Label htmlFor="clothes">Clothes Description</Label>
+                                        <Input
+                                            id="clothes"
+                                            placeholder="e.g. Silk dress, Linen shirt, Leather jacket"
+                                            value={clothes}
+                                            onChange={(e) => setClothes(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
