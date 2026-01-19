@@ -443,15 +443,15 @@ export default function AdvancedSettings({
                                         htmlFor="transformHead"
                                         className="text-base font-medium cursor-pointer"
                                     >
-                                        Enable Transform Head
+                                        Enable Talking Head
                                     </Label>
                                 </div>
                             </div>
 
-                            {(transformHead || mode === "model-angle") && (
+                            {transformHead && (
                                 <div className="space-y-2 sm:col-span-2">
                                     <Label htmlFor="angle">Angle</Label>
-                                    <Select value={angle} onValueChange={setAngle} disabled={!transformHead && mode !== "model-angle"}>
+                                    <Select value={angle} onValueChange={setAngle}>
                                         <SelectTrigger id="angle">
                                             <SelectValue placeholder="Select Angle" />
                                         </SelectTrigger>

@@ -50,6 +50,11 @@ export default function Generator() {
   // Pose
   const [pose, setPose] = useState("");
 
+  // Fashion Settings
+  const [fashionStyle, setFashionStyle] = useState("");
+  const [clothes, setClothes] = useState("");
+  const [clothesColor, setClothesColor] = useState("");
+
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -128,6 +133,9 @@ export default function Generator() {
         transformHead,
         angle,
         pose,
+        fashionStyle,
+        clothes,
+        clothesColor,
       });
       // Display all prompts from the webhook response
       setPrompts(out);
@@ -243,6 +251,12 @@ export default function Generator() {
             setAngle={setAngle}
             pose={pose}
             setPose={setPose}
+            fashionStyle={fashionStyle}
+            setFashionStyle={setFashionStyle}
+            clothes={clothes}
+            setClothes={setClothes}
+            clothesColor={clothesColor}
+            setClothesColor={setClothesColor}
           />
 
           <ResultsSection

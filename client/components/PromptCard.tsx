@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Merge } from "lucide-react";
+import { Copy, Merge, Sparkles, Loader2 } from "lucide-react";
 
 interface PromptCardProps {
   title: string;
@@ -9,9 +9,21 @@ interface PromptCardProps {
   isLoading?: boolean;
   onCombine?: () => void;
   showCombineButton?: boolean;
+  onRandomize?: () => void;
+  showRandomizeButton?: boolean;
+  isRandomizing?: boolean;
 }
 
-export default function PromptCard({ title, prompt = "", isLoading, onCombine, showCombineButton }: PromptCardProps) {
+export default function PromptCard({
+  title,
+  prompt = "",
+  isLoading,
+  onCombine,
+  showCombineButton,
+  onRandomize,
+  showRandomizeButton,
+  isRandomizing
+}: PromptCardProps) {
   const chars = prompt ? prompt.length : 0;
   const handleCopy = async () => {
     if (!prompt) return;
@@ -33,6 +45,22 @@ export default function PromptCard({ title, prompt = "", isLoading, onCombine, s
               disabled={isLoading || !prompt}
             >
               <Merge className="mr-2 h-4 w-4" /> Combine
+            </Button>
+          )}
+          {showRandomizeButton && onRandomize && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onRandomize}
+              disabled={isLoading || isRandomizing || !prompt}
+              className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200"
+            >
+              {isRandomizing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              Randomize
             </Button>
           )}
           <Button

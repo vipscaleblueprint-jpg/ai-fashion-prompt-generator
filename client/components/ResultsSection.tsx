@@ -87,6 +87,10 @@ export default function ResultsSection({
   const [duration, setDuration] = useState("5");
   const [version, setVersion] = useState("1.6");
 
+  // Combined Prompt Randomizer State
+  const [randomizedCombinedPrompt, setRandomizedCombinedPrompt] = useState("");
+  const [isRandomizingCombined, setIsRandomizingCombined] = useState(false);
+
   // Initialize video scene input when prompts change
   useEffect(() => {
     // If we have a kling prompt, prioritize that!
@@ -164,6 +168,51 @@ export default function ResultsSection({
   const handleEndFrameSelect = (f: File) => {
     setLocalEndFrame(f);
     setLocalEndPreview(URL.createObjectURL(f));
+  };
+
+  const handleRandomizeCombinedPrompt = async () => {
+    if (!combinedPromptContent) return;
+
+    setIsRandomizingCombined(true);
+    try {
+      const formData = new FormData();
+      formData.append("combined_prompt", combinedPromptContent);
+
+      const res = await fetch("https://n8n.srv1151765.hstgr.cloud/webhook/ramdomize-comPrompt", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Randomization failed");
+
+      const data = await res.json();
+      console.log("Randomizer Response:", data);
+
+      // Handle common response formats
+      let result = "";
+      if (Array.isArray(data) && data.length > 0) {
+        result = data[0].output || data[0].prompt || data[0].text || data[0].randomized_prompt || JSON.stringify(data[0]);
+      } else if (typeof data === "object" && data !== null) {
+        result = data.output || data.prompt || data.text || data.randomized_prompt || JSON.stringify(data);
+      } else if (typeof data === "string") {
+        result = data;
+      }
+
+      let finalResult = result;
+
+      // Always add the footer if it exists
+      if (combinedPromptFooter) {
+        finalResult = finalResult + "\n\n" + combinedPromptFooter;
+      }
+
+      setRandomizedCombinedPrompt(finalResult);
+      toast.success("Combined prompt randomized successfully");
+    } catch (error) {
+      console.error("Randomizer error:", error);
+      toast.error("Failed to randomize combined prompt");
+    } finally {
+      setIsRandomizingCombined(false);
+    }
   };
 
 
@@ -283,7 +332,18 @@ export default function ResultsSection({
                   key="combined"
                   title="Combined Prompt"
                   prompt={combinedPromptContent}
+                  showRandomizeButton={true}
+                  onRandomize={handleRandomizeCombinedPrompt}
+                  isRandomizing={isRandomizingCombined}
                 />
+
+                {randomizedCombinedPrompt && (
+                  <PromptCard
+                    key="randomized-combined"
+                    title="Randomized Combined Prompt"
+                    prompt={randomizedCombinedPrompt}
+                  />
+                )}
 
                 {onGenerateKling && (
                   <div className="pt-4 border-t border-dashed border-border mt-4">

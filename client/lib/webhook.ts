@@ -116,6 +116,9 @@ export async function handleImageSubmission(
     transformHead?: boolean;
     angle?: string;
     pose?: string;
+    fashionStyle?: string;
+    clothes?: string;
+    clothesColor?: string;
   },
 ): Promise<string[]> {
   // WEBHOOK_URL is always set via env or default
@@ -147,6 +150,9 @@ export async function handleImageSubmission(
   if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
   if (opts?.angle) formData.append("angle", opts.angle);
   if (opts?.pose) formData.append("pose", opts.pose);
+  if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
+  if (opts?.clothes) formData.append("clothes", opts.clothes);
+  if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
 
   // Check if any advanced settings are populated
   const hasAdvancedSettings = [
@@ -167,6 +173,9 @@ export async function handleImageSubmission(
     opts?.transformHead ? "true" : "",
     opts?.angle,
     opts?.pose,
+    opts?.fashionStyle,
+    opts?.clothes,
+    opts?.clothesColor,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {
