@@ -1,5 +1,5 @@
 const DEFAULT_BROLL_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts1";
+  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts4";
 export const BROLL_WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL as string | undefined) ||
   DEFAULT_BROLL_WEBHOOK_URL;
@@ -121,6 +121,12 @@ export async function handleBrollImageSubmission(
   if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
   if (opts?.clothes) formData.append("clothes", opts.clothes);
   if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
+
+  if (opts?.fashionStyle && (opts?.clothes || opts?.clothesColor)) {
+    formData.append("fashion_randomizer", "true");
+  } else {
+    formData.append("fashion_randomizer", "false");
+  }
 
   // Logic for "talking head enabled"
   // User allows "options under transform head" (e.g. angle) to be present,
@@ -283,6 +289,12 @@ export async function handleBrollImageSubmission2(
         formData.append(key, String(value));
       }
     });
+  }
+
+  if (opts?.fashionStyle && (opts?.clothes || opts?.clothesColor)) {
+    formData.append("fashion_randomizer", "true");
+  } else {
+    formData.append("fashion_randomizer", "false");
   }
 
   // Talking Head Logic (copied from v1)
