@@ -1,5 +1,5 @@
 const DEFAULT_BROLL_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts4";
+  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts3";
 export const BROLL_WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL as string | undefined) ||
   DEFAULT_BROLL_WEBHOOK_URL;
@@ -74,6 +74,7 @@ async function normalizeToPrompts(data: unknown): Promise<string[]> {
 export async function handleBrollImageSubmission(
   imageFile: File,
   referenceImageFile: File | null,
+  bodyAnalyzerImageFile: File | null,
   opts?: {
     signal?: AbortSignal;
     ethnicity?: string;
@@ -102,6 +103,7 @@ export async function handleBrollImageSubmission(
   const formData = new FormData();
   formData.append("data", imageFile); // Using same field name as webhook expects
   if (referenceImageFile) formData.append("Face_Analyzer", referenceImageFile);
+  if (bodyAnalyzerImageFile) formData.append("Body_Analyzer", bodyAnalyzerImageFile);
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
   if (opts?.gender) formData.append("gender", opts.gender);
   if (opts?.skinColor) formData.append("skinColor", opts.skinColor);

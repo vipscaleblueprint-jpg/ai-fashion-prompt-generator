@@ -199,6 +199,7 @@ export default function AdvancedSettings({
 }: AdvancedSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
+    const [isFashionManual, setIsFashionManual] = useState(false);
 
     // Parse existing ethnicity value on mount
     useState(() => {
@@ -502,19 +503,38 @@ export default function AdvancedSettings({
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="fashionStyle">Fashion Randomizer</Label>
-                                        <Select value={fashionStyle} onValueChange={setFashionStyle}>
-                                            <SelectTrigger id="fashionStyle">
-                                                <SelectValue placeholder="Select Style" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Casual">Casual</SelectItem>
-                                                <SelectItem value="Formal">Formal</SelectItem>
-                                                <SelectItem value="Casual Formal">Casual Formal</SelectItem>
-                                                <SelectItem value="Flora/Beach">Flora/Beach</SelectItem>
-                                                <SelectItem value="Vintage/Retro">Vintage/Retro</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor="fashionStyle">Fashion Randomizer</Label>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setIsFashionManual(!isFashionManual)}
+                                                className="h-7 text-xs px-3 text-primary border-primary/40 hover:bg-primary/10 hover:text-primary hover:border-primary transition-all shadow-sm"
+                                            >
+                                                {isFashionManual ? "Switch to Dropdown" : "Switch to Manual Input"}
+                                            </Button>
+                                        </div>
+                                        {isFashionManual ? (
+                                            <Input
+                                                id="fashionStyle"
+                                                placeholder="Enter style manualy"
+                                                value={fashionStyle}
+                                                onChange={(e) => setFashionStyle(e.target.value)}
+                                            />
+                                        ) : (
+                                            <Select value={fashionStyle} onValueChange={setFashionStyle}>
+                                                <SelectTrigger id="fashionStyle">
+                                                    <SelectValue placeholder="Select Style" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Casual">Casual</SelectItem>
+                                                    <SelectItem value="Formal">Formal</SelectItem>
+                                                    <SelectItem value="Casual Formal">Casual Formal</SelectItem>
+                                                    <SelectItem value="Flora/Beach">Flora/Beach</SelectItem>
+                                                    <SelectItem value="Vintage/Retro">Vintage/Retro</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

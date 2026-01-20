@@ -243,6 +243,11 @@ export default function ResultsSection({
   const getCombinedPromptContent = () => {
     if (!prompts || prompts.length === 0) return "";
 
+    // Special handling for 3 prompts: Face, Body, Scene - Combine all in order
+    if (prompts.length === 3) {
+      return prompts.join("\n\n") + (combinedPromptFooter ? `\n\n${combinedPromptFooter}` : "");
+    }
+
     // If we have labels (meaning face analysis + fashion prompts)
     if (labels && labels.length > 0 && prompts.length > 1) {
       // Combine face analysis (index 0) with selected fashion prompt

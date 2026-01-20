@@ -34,6 +34,8 @@ export default function BrollToPrompt() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [refPreviewUrl, setRefPreviewUrl] = useState<string | null>(null);
+  const [bodyFile, setBodyFile] = useState<File | null>(null);
+  const [bodyPreviewUrl, setBodyPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("Idle");
   const [prompts, setPrompts] = useState<string[] | null>(null);
@@ -82,8 +84,9 @@ export default function BrollToPrompt() {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+      if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
     };
-  }, [previewUrl, refPreviewUrl]);
+  }, [previewUrl, refPreviewUrl, bodyPreviewUrl]);
 
   // Polling Effect for Kling Video
   useEffect(() => {
@@ -148,6 +151,12 @@ export default function BrollToPrompt() {
     setRefPreviewUrl(url);
   };
 
+  const onBodyFileSelected = (f: File) => {
+    setBodyFile(f);
+    const url = URL.createObjectURL(f);
+    setBodyPreviewUrl(url);
+  };
+
   const resetAll = () => {
     setFile(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -155,6 +164,9 @@ export default function BrollToPrompt() {
     setRefFile(null);
     if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
     setRefPreviewUrl(null);
+    setBodyFile(null);
+    if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
+    setBodyPreviewUrl(null);
     setPrompts(null);
     setKlingPrompt(null);
     setError(null);
@@ -189,7 +201,7 @@ export default function BrollToPrompt() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const out = await handleBrollImageSubmission(file, refFile, {
+      const out = await handleBrollImageSubmission(file, refFile, bodyFile, {
         signal: controller.signal,
         ethnicity,
         gender,
@@ -396,6 +408,42 @@ export default function BrollToPrompt() {
               />
             )}
           </div>
+
+          <div className="space-y-2 pt-4 border-t border-dashed border-border">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground/80">Reference Body Analyzer (Optional)</h3>
+              {bodyFile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={() => {
+                    setBodyFile(null);
+                    if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
+                    setBodyPreviewUrl(null);
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {!bodyFile ? (
+              <div className="scale-90 origin-top-left w-[111%]">
+                <UploadZone onFileSelected={onBodyFileSelected} />
+              </div>
+            ) : (
+              <ImagePreview
+                src={bodyPreviewUrl!}
+                alt="Reference body preview"
+                onChangeImage={() => {
+                  setBodyFile(null);
+                  if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
+                  setBodyPreviewUrl(null);
+                }}
+              />
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -485,11 +533,13 @@ export default function BrollToPrompt() {
             <ResultsSection
               prompts={prompts}
               labels={
-                prompts.length === 2
-                  ? ["Face Analysis Prompt", "Scene Description"]
-                  : undefined
+                prompts.length === 3
+                  ? ["Facial Analysis", "Body Analysis", "Scene Prompt"]
+                  : prompts.length === 2
+                    ? ["Face Analysis Prompt", "Scene Description"]
+                    : undefined
               }
-              combinedPromptFooter="using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification."
+              combinedPromptFooter="using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification. Use the body composition only for the body of subject but it will  not affect the scene photograph and also the body composition is only a reference for what is the body type of the subject."
               klingPrompt={klingPrompt}
               isGeneratingKling={isGeneratingKling}
               onGenerateKling={handleGenerateKling}
