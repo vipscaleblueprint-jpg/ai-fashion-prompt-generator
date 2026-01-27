@@ -96,6 +96,8 @@ export async function handleBrollImageSubmission(
     fashionStyle?: string;
     clothes?: string;
     clothesColor?: string;
+    client?: string;
+    database_profile_enabled?: boolean;
   },
 ): Promise<string[]> {
   // BROLL_WEBHOOK_URL is always set via env or default
@@ -123,6 +125,10 @@ export async function handleBrollImageSubmission(
   if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
   if (opts?.clothes) formData.append("clothes", opts.clothes);
   if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
+  if (opts?.client) formData.append("client", opts.client);
+  if (opts?.database_profile_enabled !== undefined) {
+    formData.append("database_profile_enabled", String(opts.database_profile_enabled));
+  }
 
   if (opts?.fashionStyle && (opts?.clothes || opts?.clothesColor)) {
     formData.append("fashion_randomizer", "true");
@@ -271,9 +277,11 @@ export async function handleBrollImageSubmission2(
     transformHead?: boolean;
     angle?: string;
     pose?: string;
+    clothesColor?: string;
     fashionStyle?: string;
     clothes?: string;
-    clothesColor?: string;
+    client?: string;
+    database_profile_enabled?: boolean;
   },
 ): Promise<string[]> {
   const formData = new FormData();
@@ -527,3 +535,35 @@ export async function searchImage(query: string): Promise<string[]> {
   }
 }
 
+export const FETCH_BODY_PROFILE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-bodyprofile";
+
+export async function fetchBodyProfile(clientName: string): Promise<string | null> {
+  try {
+    const response = await fetch(FETCH_BODY_PROFILE_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ client_name: clientName }),
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch body profile: ${response.status} ${response.statusText}`);
+      return null;
+    } else {
+      console.log("Body profile fetch triggered successfully for:", clientName);
+      const data = await response.json();
+      console.log("Body profile data received:", data);
+
+      if (Array.isArray(data) && data.length > 0) {
+        const item = data[0];
+        return item.body || item.body_analysis || item.face || item.output || item.prompt || null;
+      }
+      const obj = data as any;
+      return obj.body || obj.body_analysis || obj.face || obj.output || obj.prompt || null;
+    }
+  } catch (error) {
+    console.error("Error fetching body profile:", error);
+    return null;
+  }
+}

@@ -132,7 +132,28 @@ export const getKlingTask = async (req: Request, res: ExpressResponse) => {
             }
         });
 
-        const data = await response.json();
+        console.log(`[Kling] Polling PiAPI Response Status: ${response.status}`);
+        const text = await response.text();
+
+        // Log brief preview for debugging
+        console.log(`[Kling] PIAPI Status Raw Response: ${text.substring(0, 200)}`);
+
+        if (!response.ok) {
+            return res.status(response.status).json({
+                code: response.status,
+                message: "PiAPI Error",
+                detail: text
+            });
+        }
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error("[Kling] Failed to parse JSON polling response:", e);
+            return res.status(502).json({ code: 502, message: "Invalid JSON from PiAPI during polling", detail: text });
+        }
+
         res.status(response.status).json(data);
     } catch (error: any) {
         console.error("PiAPI Get Error:", error);

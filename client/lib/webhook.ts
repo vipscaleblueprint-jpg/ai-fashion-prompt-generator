@@ -73,10 +73,15 @@ async function normalizeToPrompts(data: unknown): Promise<string[]> {
   }
   if (typeof data === "object") {
     const obj = data as any;
-    // Handle nested input array
+    // Handle nested input array or variants array
     if (Array.isArray(obj.input)) {
       return obj.input
-        .map((x: any) => x?.prompt)
+        .map((x: any) => x?.prompt || x)
+        .filter((p: any): p is string => typeof p === "string");
+    }
+    if (Array.isArray(obj.variants)) {
+      return obj.variants
+        .map((x: any) => x?.prompt || x?.text || x)
         .filter((p: any): p is string => typeof p === "string");
     }
     // Handle specific nested content like Gemini if returned as single object
@@ -97,6 +102,7 @@ async function normalizeToPrompts(data: unknown): Promise<string[]> {
 export async function handleImageSubmission(
   imageFile: File,
   referenceImageFile: File | null,
+  bodyAnalyzerImageFile: File | null,
   opts?: {
     signal?: AbortSignal;
     mode?: string;
@@ -119,6 +125,8 @@ export async function handleImageSubmission(
     fashionStyle?: string;
     clothes?: string;
     clothesColor?: string;
+    client?: string;
+    database_profile_enabled?: boolean;
   },
 ): Promise<string[]> {
   // WEBHOOK_URL is always set via env or default
@@ -126,6 +134,7 @@ export async function handleImageSubmission(
   const formData = new FormData();
   formData.append("Base_Image", imageFile);
   if (referenceImageFile) formData.append("Face_Analyzer", referenceImageFile);
+  if (bodyAnalyzerImageFile) formData.append("Body_Analyzer", bodyAnalyzerImageFile);
 
   // Handle mode specific payload
   if (opts?.mode === 'editorial-portrait') {
@@ -133,6 +142,9 @@ export async function handleImageSubmission(
   } else if (opts?.mode) {
     formData.append("mode", opts.mode);
   }
+
+  // Explicitly send editorial_mode flag as requested
+  formData.append("editorial_mode", String(opts?.mode === 'editorial-portrait'));
 
   if (opts?.ethnicity) formData.append("ethnicity", opts.ethnicity);
   if (opts?.gender) formData.append("gender", opts.gender);
@@ -153,6 +165,10 @@ export async function handleImageSubmission(
   if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
   if (opts?.clothes) formData.append("clothes", opts.clothes);
   if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
+  if (opts?.client) formData.append("client", opts.client);
+  if (opts?.database_profile_enabled !== undefined) {
+    formData.append("database_profile_enabled", String(opts.database_profile_enabled));
+  }
 
   // Check if any advanced settings are populated
   const hasAdvancedSettings = [

@@ -4,7 +4,7 @@ import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import ResultsSection from "@/components/ResultsSection";
 import AdvancedSettings from "@/components/AdvancedSettings";
-import { handleBrollImageSubmission2, fetchFaceProfile } from "@/lib/broll-webhook";
+import { handleBrollImageSubmission2, fetchFaceProfile, fetchBodyProfile } from "@/lib/broll-webhook";
 import { fetchMarketingClients, MarketingClient } from "@/lib/marketing-client-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
@@ -17,6 +17,25 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useUploadThing } from "@/lib/uploadthing-config";
+import { handleKlingPromptSubmission } from "@/lib/kling-webhook";
+
+// Type definitions for PiAPI responses
+interface PiApiTaskResponse {
+    code: number;
+    data: {
+        task_id: string;
+        status: string;
+        output?: {
+            video_url?: string;
+        };
+        error?: {
+            code: number;
+            message: string;
+        };
+    };
+    message: string;
+}
 
 
 // Local definition removed in favor of import
@@ -35,7 +54,17 @@ export default function BrollToPrompt2() {
     const [prompts, setPrompts] = useState<string[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Kling State (Removed)
+    // Kling State
+    const [klingPrompt, setKlingPrompt] = useState<string | null>(null);
+    const [isGeneratingKling, setIsGeneratingKling] = useState(false);
+
+    // Kling Video State
+    const [isGeneratingKlingVideo, setIsGeneratingKlingVideo] = useState(false);
+    const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
+    const [videoStatus, setVideoStatus] = useState<string>("");
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
+    const { startUpload } = useUploadThing("imageUploader");
 
 
 
@@ -68,6 +97,7 @@ export default function BrollToPrompt2() {
     const [clientList, setClientList] = useState<MarketingClient[]>([]);
     const [isLoadingClients, setIsLoadingClients] = useState(false);
     const [isFetchingFaceProfile, setIsFetchingFaceProfile] = useState(false);
+    const [isFetchingBodyProfile, setIsFetchingBodyProfile] = useState(false);
 
     // UI State - Upload section only shows when image is selected
     const [isUploadSectionOpen, setIsUploadSectionOpen] = useState(false);
@@ -141,6 +171,46 @@ export default function BrollToPrompt2() {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
         };
     }, [previewUrl]);
+
+    // Polling Effect for Kling Video
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+
+        if (videoTaskId && isGeneratingKlingVideo) {
+            intervalId = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/piapi/kling/task/${videoTaskId}`);
+                    const data: PiApiTaskResponse = await res.json();
+
+                    if (data.code === 200) {
+                        const taskStatus = data.data.status;
+                        setVideoStatus(`Status: ${taskStatus}`);
+
+                        if (taskStatus === "completed") {
+                            if (data.data.output?.video_url) {
+                                setVideoUrl(data.data.output.video_url);
+                                toast.success("Video generated successfully!");
+                            } else {
+                                toast.error("Completed but no video URL found.");
+                            }
+                            setIsGeneratingKlingVideo(false);
+                            setVideoTaskId(null);
+                        } else if (taskStatus === "failed") {
+                            toast.error(`Generation failed: ${data.data.error?.message || "Unknown error"}`);
+                            setIsGeneratingKlingVideo(false);
+                            setVideoTaskId(null);
+                        }
+                    } else {
+                        console.warn("Polling error:", data);
+                    }
+                } catch (err) {
+                    console.error("Polling fetch error", err);
+                }
+            }, 5000); // Poll every 5 seconds
+        }
+
+        return () => clearInterval(intervalId);
+    }, [videoTaskId, isGeneratingKlingVideo]);
 
     useEffect(() => {
         const fetchClients = async () => {
@@ -267,7 +337,10 @@ export default function BrollToPrompt2() {
 
     const handleGenerate = async (imageSourceOverride?: File | string) => {
         const sourceToUse = imageSourceOverride || file;
-        if (!sourceToUse) return;
+        if (!sourceToUse) {
+            toast.error("Please select an image first");
+            return;
+        }
         setIsLoading(true);
         setError(null);
         const stop = startProgressMessages();
@@ -294,6 +367,8 @@ export default function BrollToPrompt2() {
                 fashionStyle,
                 clothes,
                 clothesColor,
+                client: selectedClient || undefined,
+                database_profile_enabled: !!selectedClient,
             });
 
             // Logic: prompts[0] is Face, prompts[1] is Scene.
@@ -307,7 +382,8 @@ export default function BrollToPrompt2() {
 
             setPrompts(prev => {
                 const facePrompt = prev && prev[0] ? prev[0] : "";
-                return [facePrompt, scenePrompt];
+                const bodyPrompt = prev && prev[1] ? prev[1] : "";
+                return [facePrompt, bodyPrompt, scenePrompt];
             });
 
             // Persist to history with the original file
@@ -356,6 +432,88 @@ export default function BrollToPrompt2() {
         abortRef.current?.abort();
     };
 
+    const handleGenerateKling = async (combinedPrompt: string) => {
+        setIsGeneratingKling(true);
+        setKlingPrompt(null);
+        try {
+            const result = await handleKlingPromptSubmission(combinedPrompt);
+            setKlingPrompt(result);
+            toast.success("Kling prompt generated successfully");
+        } catch (e: any) {
+            toast.error("Failed to generate Kling prompt");
+            console.error(e);
+        } finally {
+            setIsGeneratingKling(false);
+        }
+    };
+
+    const handleGenerateKlingVideo = async (params: {
+        prompt: string;
+        negativePrompt: string;
+        cfgScale: string;
+        mode: string;
+        duration: string;
+        version: string;
+        aspectRatio: string;
+        startFrame: File;
+        endFrame: File | null;
+    }) => {
+        setIsGeneratingKlingVideo(true);
+        setVideoStatus("Uploading images...");
+        setVideoUrl(null);
+        setVideoTaskId(null);
+
+        try {
+            // 1. Upload Images using uploadthing
+            const filesToUpload = [params.startFrame];
+            if (params.endFrame) filesToUpload.push(params.endFrame);
+
+            const uploadRes = await startUpload(filesToUpload);
+
+            if (!uploadRes || uploadRes.length !== filesToUpload.length) {
+                throw new Error("Failed to upload images");
+            }
+
+            const startImageUrl = uploadRes[0].url;
+            const endImageUrl = params.endFrame ? uploadRes[1].url : undefined;
+
+            setVideoStatus("Submitting task to Kling...");
+
+            // 2. Submit Task to PiAPI (via Proxy)
+            const payload = {
+                prompt: params.prompt,
+                negative_prompt: params.negativePrompt,
+                cfg_scale: parseFloat(params.cfgScale),
+                duration: parseInt(params.duration),
+                image_url: startImageUrl,
+                image_tail_url: endImageUrl,
+                mode: params.mode,
+                version: params.version
+            };
+
+            const res = await fetch("/api/piapi/kling/task", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data: PiApiTaskResponse = await res.json();
+
+            if (data.code === 200 && data.data.task_id) {
+                setVideoTaskId(data.data.task_id);
+                setVideoStatus("Pending...");
+                toast.success("Task submitted successfully!");
+            } else {
+                throw new Error(data.message || data.data.error?.message || "Submission failed");
+            }
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e.message || "Something went wrong");
+            setIsGeneratingKlingVideo(false);
+            setVideoStatus("Failed");
+        }
+    };
+
 
 
 
@@ -363,27 +521,37 @@ export default function BrollToPrompt2() {
     const handleClientChange = async (value: string) => {
         setSelectedClient(value);
         setIsFetchingFaceProfile(true);
+        setIsFetchingBodyProfile(true);
         try {
-            // Use the shared library function which handles the webhook directly
-            const faceData = await fetchFaceProfile(value);
+            // Use the shared library functions which handle the webhooks directly
+            const [faceData, bodyData] = await Promise.all([
+                fetchFaceProfile(value),
+                fetchBodyProfile(value)
+            ]);
 
-            // Always update prompts, even if faceData is null (to clear previous client's data)
+            // Always update prompts, even if data is null (to clear previous client's data)
             setPrompts(prev => {
-                // Logic: prompts[0] is Face, prompts[1] is Scene.
-                const scenePrompt = prev && prev[1] ? prev[1] : "";
-                return [faceData || "", scenePrompt];
+                // Logic: prompts[0] is Face, prompts[1] is Body, prompts[2] is Scene.
+                const scenePrompt = prev && prev[2] ? prev[2] : "";
+                return [faceData || "", bodyData || "", scenePrompt];
             });
 
             if (faceData) {
                 toast.success("Face profile loaded successfully");
-            } else {
-                toast.error("No face profile found for this client, face prompt cleared.");
+            }
+            if (bodyData) {
+                toast.success("Body profile loaded successfully");
+            }
+
+            if (!faceData && !bodyData) {
+                toast.error("No profiles found for this client, prompts cleared.");
             }
         } catch (e) {
             console.error(e);
-            toast.error("Failed to load face profile");
+            toast.error("Failed to load client profiles");
         } finally {
             setIsFetchingFaceProfile(false);
+            setIsFetchingBodyProfile(false);
         }
     };
 
@@ -575,13 +743,24 @@ export default function BrollToPrompt2() {
                         setClothesColor={setClothesColor}
                     />
 
-                    {(prompts || isFetchingFaceProfile) && (
+                    {(prompts || isFetchingFaceProfile || isFetchingBodyProfile) && (
                         <ResultsSection
                             prompts={prompts}
-                            labels={["Face Analysis Prompt", "Scene Description"]}
+                            labels={["Face Analysis Prompt", "Body Analysis Prompt", "Scene Description"]}
                             combinedPromptFooter="using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification."
                             isFetchingFaceProfile={isFetchingFaceProfile}
+                            isFetchingBodyProfile={isFetchingBodyProfile}
+                            klingPrompt={klingPrompt}
+                            isGeneratingKling={isGeneratingKling}
+                            onGenerateKling={handleGenerateKling}
                             startFrameImage={file}
+                            // Using the same file for end frame if only one is available is handled in ResultsSection, 
+                            // but here we don't have a separate ref frame logic yet in V2.
+                            // However, we can pass null or file.
+                            isGeneratingKlingVideo={isGeneratingKlingVideo}
+                            videoStatus={videoStatus}
+                            videoUrl={videoUrl}
+                            onGenerateKlingVideo={handleGenerateKlingVideo}
                             onRegenerate={() => handleGenerate()}
                             isLoading={isLoading}
                         />
@@ -599,7 +778,7 @@ export default function BrollToPrompt2() {
                             <div className="flex items-center gap-3">
                                 <Button
                                     onClick={() => handleGenerate()}
-                                    disabled={!file || isLoading}
+                                    disabled={isLoading}
                                     className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
                                 >
                                     {isLoading ? (

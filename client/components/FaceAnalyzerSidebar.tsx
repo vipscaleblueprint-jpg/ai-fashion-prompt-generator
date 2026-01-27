@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ScanFace } from "lucide-react";
+import { ScanFace, User } from "lucide-react";
 
 export function FaceAnalyzerSidebar() {
     const location = useLocation();
@@ -11,7 +11,11 @@ export function FaceAnalyzerSidebar() {
             to: "/face-analyzer",
             icon: ScanFace,
         },
-        // Future items can be added here
+        {
+            label: "Body Analyzer",
+            to: "/body-analyzer",
+            icon: User,
+        },
     ];
 
     return (

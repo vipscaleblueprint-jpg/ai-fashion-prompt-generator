@@ -5,12 +5,14 @@ import { Loader2, Sparkles, Video, Download } from "lucide-react";
 import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
 interface ResultsSectionProps {
   prompts: string[] | null;
   labels?: string[];
   combinedPromptFooter?: string;
-  isFetchingFaceProfile?: boolean; // New prop
+  isFetchingFaceProfile?: boolean;
+  isFetchingBodyProfile?: boolean;
   // Kling Generator Props
   klingPrompt?: string | null;
   isGeneratingKling?: boolean;
@@ -54,6 +56,7 @@ export default function ResultsSection({
   labels,
   combinedPromptFooter,
   isFetchingFaceProfile,
+  isFetchingBodyProfile,
   klingPrompt,
   isGeneratingKling,
   onGenerateKling,
@@ -67,10 +70,10 @@ export default function ResultsSection({
   isLoading: isRegenerating
 }: ResultsSectionProps) {
   const hasPrompts = (prompts && prompts.length > 0);
-  const showSection = hasPrompts || isFetchingFaceProfile;
+  const showSection = hasPrompts || isFetchingFaceProfile || isFetchingBodyProfile;
 
-  // Track which fashion prompt is selected for combining (default to first fashion prompt, index 1)
-  const [selectedFashionPromptIndex, setSelectedFashionPromptIndex] = useState<number>(1);
+  // Track which fashion prompt is selected for combining
+  const [selectedFashionPromptIndex, setSelectedFashionPromptIndex] = useState<number>(0);
 
   // Local state for video generator
   const [videoSceneInput, setVideoSceneInput] = useState("");
@@ -80,10 +83,11 @@ export default function ResultsSection({
   const [localStartPreview, setLocalStartPreview] = useState<string | null>(null);
   const [localEndFrame, setLocalEndFrame] = useState<File | null>(null);
   const [localEndPreview, setLocalEndPreview] = useState<string | null>(null);
+
   // New fields state
   const [negativePrompt, setNegativePrompt] = useState("blur, jitter, artifacts, distortion");
   const [cfgScale, setCfgScale] = useState("0.5");
-  const [mode, setMode] = useState("pro"); // Default to pro as per Kling.tsx usually? Or std. Kling.tsx default was pro.
+  const [mode, setMode] = useState("pro");
   const [duration, setDuration] = useState("5");
   const [version, setVersion] = useState("1.6");
 
@@ -91,13 +95,54 @@ export default function ResultsSection({
   const [randomizedCombinedPrompt, setRandomizedCombinedPrompt] = useState("");
   const [isRandomizingCombined, setIsRandomizingCombined] = useState(false);
 
+  // Helper function to get combined prompt content
+  const getCombinedPromptContent = () => {
+    if (!prompts || prompts.length === 0) return "";
+
+    const analysisCount = labels ? labels.length : 0;
+    const analysisPrompts = prompts.slice(0, analysisCount).filter(p => p && p.trim() !== "");
+
+    // Get the selected variant prompt
+    const variantPrompt = (prompts[selectedFashionPromptIndex] && prompts[selectedFashionPromptIndex].trim() !== "")
+      ? prompts[selectedFashionPromptIndex]
+      : "";
+
+    let combinedParts: string[] = [];
+
+    // Add analysis prompts if they exist
+    if (analysisPrompts.length > 0) {
+      combinedParts = combinedParts.concat(analysisPrompts);
+    }
+
+    // Add the selected variant prompt if it exists (only if it's not already in analysis - though usually they are separate)
+    if (variantPrompt) {
+      combinedParts.push(variantPrompt);
+    }
+
+    // If no prompts are combined yet, and there are prompts, just take the first non-empty one as a fallback
+    if (combinedParts.length === 0 && prompts.length > 0) {
+      const firstNonEmpty = prompts.find(p => p && p.trim() !== "");
+      if (firstNonEmpty) {
+        combinedParts.push(firstNonEmpty);
+      }
+    }
+
+    let result = combinedParts.join("\n\n");
+
+    // Always add the footer if it exists
+    if (combinedPromptFooter) {
+      result = result + "\n\n" + combinedPromptFooter;
+    }
+
+    return result;
+  };
+
+  const combinedPromptContent = getCombinedPromptContent();
+
   // Initialize video scene input when prompts change
   useEffect(() => {
-    // If we have a kling prompt, prioritize that!
     if (klingPrompt) {
-      // Parse the Kling prompt to extract negative prompt and scene content
       const parseKlingPrompt = (prompt: string) => {
-        // Look for negative prompt markers (case-insensitive)
         const negativeMarkers = [
           /negative\s*prompt\s*[:：]\s*/i,
           /negative\s*[:：]\s*/i,
@@ -115,8 +160,6 @@ export default function ResultsSection({
             const beforeNegative = prompt.substring(0, match.index!).trim();
             const afterNegative = prompt.substring(splitIndex).trim();
 
-            // The negative prompt is everything after the marker
-            // Check if there's a newline or double newline that separates sections
             const negativeEndMatch = afterNegative.match(/\n\n|\r\n\r\n/);
             if (negativeEndMatch) {
               negativeContent = afterNegative.substring(0, negativeEndMatch.index!).trim();
@@ -128,38 +171,27 @@ export default function ResultsSection({
             break;
           }
         }
-
         return { sceneContent, negativeContent };
       };
 
       const { sceneContent, negativeContent } = parseKlingPrompt(klingPrompt);
       setVideoSceneInput(sceneContent);
-      if (negativeContent) {
-        setNegativePrompt(negativeContent);
-      }
-    } else if (prompts && prompts.length > 0) {
-      const combined = getCombinedPromptContent();
-      setVideoSceneInput(combined);
+      if (negativeContent) setNegativePrompt(negativeContent);
+    } else if (hasPrompts) {
+      setVideoSceneInput(combinedPromptContent);
     }
-  }, [prompts, combinedPromptFooter, klingPrompt, selectedFashionPromptIndex]);
+  }, [prompts, combinedPromptFooter, klingPrompt, selectedFashionPromptIndex, combinedPromptContent]);
 
   // Reset selected index when prompts change
   useEffect(() => {
-    if (prompts && prompts.length > 1) {
-      setSelectedFashionPromptIndex(1); // Default to first fashion prompt
+    if (prompts && prompts.length > 0) {
+      const analysisCount = labels ? labels.length : 0;
+      const defaultIndex = prompts.length > analysisCount ? analysisCount : (prompts.length - 1);
+      setSelectedFashionPromptIndex(Math.max(0, defaultIndex));
     }
-  }, [prompts]);
+  }, [prompts, labels]);
 
-  // NO PROP SYNCING for frames - User wants to upload NEW images explicitly.
-  // We strictly start empty unless user uploads.
-  useEffect(() => {
-    // Cleanup function
-    return () => {
-      // Cleanup if needed
-    };
-  }, []);
-
-  // Handle local uploads
+  // Handlers
   const handleStartFrameSelect = (f: File) => {
     setLocalStartFrame(f);
     setLocalStartPreview(URL.createObjectURL(f));
@@ -172,464 +204,417 @@ export default function ResultsSection({
 
   const handleRandomizeCombinedPrompt = async () => {
     if (!combinedPromptContent) return;
-
     setIsRandomizingCombined(true);
     try {
       const formData = new FormData();
       formData.append("combined_prompt", combinedPromptContent);
-
       const res = await fetch("https://n8n.srv1151765.hstgr.cloud/webhook/ramdomize-comPrompt", {
         method: "POST",
         body: formData,
       });
-
       if (!res.ok) throw new Error("Randomization failed");
-
       const data = await res.json();
-      console.log("Randomizer Response:", data);
-
-      // Handle common response formats
-      let result = "";
-      if (Array.isArray(data) && data.length > 0) {
-        result = data[0].output || data[0].prompt || data[0].text || data[0].randomized_prompt || JSON.stringify(data[0]);
-      } else if (typeof data === "object" && data !== null) {
-        result = data.output || data.prompt || data.text || data.randomized_prompt || JSON.stringify(data);
-      } else if (typeof data === "string") {
-        result = data;
-      }
-
-      let finalResult = result;
-
-      // Always add the footer if it exists
-      if (combinedPromptFooter) {
-        finalResult = finalResult + "\n\n" + combinedPromptFooter;
-      }
-
-      setRandomizedCombinedPrompt(finalResult);
+      let result = typeof data === "string" ? data : (data[0]?.output || data?.output || JSON.stringify(data));
+      if (combinedPromptFooter) result = result + "\n\n" + combinedPromptFooter;
+      setRandomizedCombinedPrompt(result);
       toast.success("Combined prompt randomized successfully");
     } catch (error) {
-      console.error("Randomizer error:", error);
       toast.error("Failed to randomize combined prompt");
     } finally {
       setIsRandomizingCombined(false);
     }
   };
 
-
   const handleDownloadText = () => {
     if (!hasPrompts) return;
-    const text = prompts
-      .map((p) => p)
-      .join("\n\n---\n\n");
+    const text = prompts!.join("\n\n---\n\n");
     download("fashion-prompt.txt", text, "text/plain;charset=utf-8");
   };
 
   const handleDownloadJson = () => {
     if (!hasPrompts) return;
-    const json = JSON.stringify(
-      { input: prompts.map((p) => ({ prompt: p })) },
-      null,
-      2,
-    );
-    download("fashion-prompts.json", json, "application/json;charset=utf-8");
+    download("fashion-prompts.json", JSON.stringify({ input: prompts.map(p => ({ prompt: p })) }, null, 2), "application/json;charset=utf-8");
   };
 
   const getTitle = (i: number) => {
     if (labels && labels[i]) return labels[i];
-    return (prompts && prompts.length > 1) ? `Variation ${i + 1}` : "Generated Prompt";
-  };
-
-  // Helper function to get combined prompt content
-  const getCombinedPromptContent = () => {
-    if (!prompts || prompts.length === 0) return "";
-
-    // Special handling for 3 prompts: Face, Body, Scene - Combine all in order
-    if (prompts.length === 3) {
-      return prompts.join("\n\n") + (combinedPromptFooter ? `\n\n${combinedPromptFooter}` : "");
+    const analysisCount = labels ? labels.length : 0;
+    if (i >= analysisCount) {
+      const variantNum = i - analysisCount + 1;
+      return (prompts && prompts.length > analysisCount) ? `Variation ${variantNum}` : "Generated Prompt";
     }
-
-    // If we have labels (meaning face analysis + fashion prompts)
-    if (labels && labels.length > 0 && prompts.length > 1) {
-      // Combine face analysis (index 0) with selected fashion prompt
-      const faceAnalysis = prompts[0] || "";
-      const selectedFashion = prompts[selectedFashionPromptIndex] || prompts[1] || "";
-      return faceAnalysis + "\n\n" + selectedFashion + (combinedPromptFooter ? `\n\n${combinedPromptFooter}` : "");
-    }
-
-    // Otherwise join all prompts
-    return prompts.join("\n\n") + (combinedPromptFooter ? `\n\n${combinedPromptFooter}` : "");
+    return "Generated Prompt";
   };
-
-  const combinedPromptContent = getCombinedPromptContent();
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {showSection && (
-        <>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-foreground">
-              Your Fashion Photography Prompt{prompts && prompts.length > 1 ? 's' : ''}
-            </h2>
-            <div className="flex items-center gap-2">
+        <div className="space-y-10">
+          {/* Header & Main Actions */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 shadow-sm">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                Photography Workspace
+              </h2>
+              <p className="text-sm text-muted-foreground font-medium">
+                {prompts && prompts.length > 0
+                  ? `${prompts.length} Prompts Generated Successfully`
+                  : "Analyzing and generating your creative assets..."}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               {onRegenerate && (
                 <Button
-                  variant="secondary"
+                  variant="default"
                   onClick={onRegenerate}
                   disabled={isRegenerating}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all active:scale-95 flex-grow md:flex-grow-0"
                 >
                   {isRegenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Regenerating...
+                      Processing...
                     </>
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Regenerate
+                      {(prompts && prompts.length > 0) ? "Regenerate" : "Generate"}
                     </>
                   )}
                 </Button>
               )}
-              <Button variant="outline" onClick={handleDownloadText} disabled={!hasPrompts}>
-                Download as Text
-              </Button>
-              <Button onClick={handleDownloadJson} disabled={!hasPrompts}>Download Prompt</Button>
+              <div className="flex gap-2 w-full md:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/50 border-border/50 hover:bg-white/80 transition-colors flex-1 md:flex-none"
+                  onClick={handleDownloadText}
+                  disabled={!hasPrompts}
+                >
+                  <Download className="mr-2 h-4 w-4" /> .TXT
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/50 border-border/50 hover:bg-white/80 transition-colors flex-1 md:flex-none"
+                  onClick={handleDownloadJson}
+                  disabled={!hasPrompts}
+                >
+                  <Download className="mr-2 h-4 w-4" /> .JSON
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4">
 
-            {/* If we are fetching face profile and have no prompts yet, show a loading card */}
-            {isFetchingFaceProfile && !hasPrompts && (
-              <PromptCard title="Face Analysis Prompt" prompt="" isLoading={true} />
+          <div className="space-y-8">
+            {/* Analysis Row: Face & Body */}
+            {(isFetchingFaceProfile || isFetchingBodyProfile || (hasPrompts && prompts!.slice(0, 2).some(p => p))) && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Source Analysis</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {(isFetchingFaceProfile || (hasPrompts && prompts![0])) && (
+                    <PromptCard
+                      title="Face Analysis Prompt"
+                      prompt={prompts ? (prompts[0] || "") : ""}
+                      isLoading={isFetchingFaceProfile}
+                    />
+                  )}
+                  {(isFetchingBodyProfile || (hasPrompts && prompts![1])) && (
+                    <PromptCard
+                      title="Body Analysis Prompt"
+                      prompt={prompts ? (prompts[1] || "") : ""}
+                      isLoading={isFetchingBodyProfile}
+                    />
+                  )}
+                </div>
+              </div>
             )}
 
-            {hasPrompts && prompts!.map((p, i) => {
-              // Hide empty prompts unless it's the first one loading
-              if (!p && !(i === 0 && isFetchingFaceProfile)) return null;
+            {/* Variations Grid */}
+            {hasPrompts && prompts!.length > 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Creative Variations</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5">
+                  {prompts!.slice(2).map((p, idx) => {
+                    const i = idx + 2;
+                    if (!p && !labels?.[i]) return null;
+                    return (
+                      <PromptCard
+                        key={i}
+                        title={getTitle(i)}
+                        prompt={p}
+                        showCombineButton={true}
+                        onCombine={() => {
+                          setSelectedFashionPromptIndex(i);
+                          toast.success("Design Applied to Master Prompt");
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-              // Determine if this is a fashion prompt (not face analysis)
-              const isFaceAnalysis = labels && labels[0] && i === 0;
-              const isFashionPrompt = labels && labels.length > 0 && i > 0;
-
-              return (
-                <PromptCard
-                  key={i}
-                  title={getTitle(i)}
-                  prompt={p}
-                  // If it's the first prompt (Face Analysis) and we are currently re-fetching it, show loading
-                  // Actually the requirement is "show face analysis text after prompt generation it should show after i select a client add a loading"
-                  // If we already have prompts, and we select a client, we are re-fetching.
-                  // We typically update the first prompt. So if isFetchingFaceProfile is true, the first card should be loading.
-                  isLoading={isFetchingFaceProfile && i === 0}
-                  showCombineButton={isFashionPrompt}
-                  onCombine={isFashionPrompt ? () => {
-                    setSelectedFashionPromptIndex(i);
-                    toast.success("Combined successfully");
-                  } : undefined}
-                />
-              );
-            })}
-
-            {hasPrompts && prompts!.filter(p => p && p.trim() !== "").length > 1 && (
-              <>
-                <PromptCard
-                  key="combined"
-                  title="Combined Prompt"
-                  prompt={combinedPromptContent}
-                  showRandomizeButton={true}
-                  onRandomize={handleRandomizeCombinedPrompt}
-                  isRandomizing={isRandomizingCombined}
-                />
-
-                {randomizedCombinedPrompt && (
+            {/* Master Master Box: The focal point */}
+            {hasPrompts && prompts!.some(p => p.trim() !== "") && (
+              <div className="space-y-4 pt-6">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Master Output</h3>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
                   <PromptCard
-                    key="randomized-combined"
-                    title="Randomized Combined Prompt"
-                    prompt={randomizedCombinedPrompt}
+                    key="combined"
+                    title="Master Photography Prompt"
+                    prompt={combinedPromptContent}
+                    showRandomizeButton={true}
+                    onRandomize={handleRandomizeCombinedPrompt}
+                    isRandomizing={isRandomizingCombined}
+                    isMaster={true}
                   />
-                )}
 
-                {onGenerateKling && (
-                  <div className="pt-4 border-t border-dashed border-border mt-4">
-                    <div className="flex flex-col gap-4">
+                  {randomizedCombinedPrompt && (
+                    <PromptCard
+                      key="randomized-combined"
+                      title="Optimized Creative Prompt"
+                      prompt={randomizedCombinedPrompt}
+                      isMaster={true}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* AI Generator Tools */}
+            {hasPrompts && (onGenerateKling || onGenerateKlingVideo) && (
+              <div className="space-y-6 pt-10 border-t border-border/50">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Advanced AI Production</h3>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Kling Prompt Gen */}
+                  {onGenerateKling && (
+                    <div className="p-6 rounded-3xl bg-purple-500/5 border border-purple-500/20 space-y-5">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-purple-500" />
-                          Kling AI Prompt Generator
-                        </h3>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600">
+                            <Sparkles className="w-5 h-5" />
+                          </div>
+                          <h4 className="font-bold text-lg">Kling AI Scripting</h4>
+                        </div>
                         <Button
                           onClick={() => onGenerateKling(combinedPromptContent)}
                           disabled={isGeneratingKling}
-                          className="bg-purple-600 hover:bg-purple-700 text-white"
+                          className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-200"
                         >
-                          {isGeneratingKling ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
-                            </>
-                          ) : (
-                            "Generate Kling Prompt"
-                          )}
+                          {isGeneratingKling ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Generator"}
                         </Button>
                       </div>
 
-                      {klingPrompt && (
-                        <PromptCard
-                          key="kling"
-                          title="Generated Kling Prompt"
-                          prompt={klingPrompt}
-                        />
+                      {klingPrompt ? (
+                        <PromptCard title="Kling Prompt" prompt={klingPrompt} />
+                      ) : (
+                        <div className="h-[180px] rounded-2xl border border-dashed border-purple-300/50 bg-purple-50/30 flex items-center justify-center p-8 text-center">
+                          <p className="text-sm text-purple-600/60 font-medium italic">
+                            Convert your master prompt into a high-quality Kling AI production script.
+                          </p>
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {onGenerateKlingVideo && (
-                  <div className="pt-4 border-t border-dashed border-border mt-4">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                          <Video className="w-4 h-4 text-orange-500" />
-                          Kling Video Generator
-                        </h3>
+                  {/* Kling Video Gen */}
+                  {onGenerateKlingVideo && (
+                    <div className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/20 space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600">
+                          <Video className="w-5 h-5" />
+                        </div>
+                        <h4 className="font-bold text-lg">Cinema Engine (V2)</h4>
                       </div>
-
-                      {/* Video Player / Result Area */}
-                      <div className="w-full aspect-video bg-muted rounded-xl flex items-center justify-center border border-border overflow-hidden relative">
-                        {videoUrl ? (
-                          <video
-                            src={videoUrl}
-                            controls
-                            autoPlay
-                            loop
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-center p-6 text-muted-foreground w-full">
-                            {isGeneratingKlingVideo || videoStatus ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="font-medium text-foreground">{videoStatus || "Processing..."}</p>
-                                <p className="text-xs">This may take a few minutes...</p>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col items-center gap-2">
-                                <Video className="w-12 h-12 text-muted-foreground/50" />
-                                <p>Video preview will appear here</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {videoUrl && (
-                        <Button className="w-full" variant="outline" asChild>
-                          <a href={videoUrl} download target="_blank" rel="noreferrer">
-                            <Download className="mr-2 h-4 w-4" /> Download Video
-                          </a>
-                        </Button>
-                      )}
 
                       <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Scene Input</label>
-                          <textarea
-                            className="w-full min-h-[100px] p-3 rounded-md border border-input bg-background text-sm"
-                            value={videoSceneInput}
-                            onChange={(e) => setVideoSceneInput(e.target.value)}
-                          />
-                        </div>
-
-                        {/* Frame Uploaders */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm font-medium">Start Frame</label>
-                              {localStartFrame && (
-                                <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => {
-                                  setLocalStartFrame(null);
-                                  setLocalStartPreview(null);
-                                }}>Clear</Button>
-                              )}
-                            </div>
-                            {!localStartFrame ? (
-                              <UploadZone onFileSelected={handleStartFrameSelect} />
-                            ) : (
-                              <ImagePreview src={localStartPreview!} onChangeImage={() => {
-                                setLocalStartFrame(null);
-                                setLocalStartPreview(null);
-                              }} />
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm font-medium">End Frame</label>
-                              {localEndFrame && (
-                                <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={() => {
-                                  setLocalEndFrame(null);
-                                  setLocalEndPreview(null);
-                                }}>Clear</Button>
-                              )}
-                            </div>
-                            {!localEndFrame ? (
-                              <UploadZone onFileSelected={handleEndFrameSelect} />
-                            ) : (
-                              <ImagePreview src={localEndPreview!} onChangeImage={() => {
-                                setLocalEndFrame(null);
-                                setLocalEndPreview(null);
-                              }} />
-                            )}
-                            {!localEndFrame && (
-                              <div className="text-xs text-muted-foreground mt-1 text-center">
-                                (Optional) If empty, Start Frame will be used.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Aspect Ratio</label>
-                            <select
-                              className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                              value={aspectRatio}
-                              onChange={(e) => setAspectRatio(e.target.value)}
-                            >
-                              <option value="16:9">16:9 (Landscape)</option>
-                              <option value="9:16">9:16 (Portrait)</option>
-                              <option value="1:1">1:1 (Square)</option>
-                            </select>
-                          </div>
-
-                          {/* New Advanced Fields */}
-                          <div className="space-y-4 pt-4 border-t border-dashed border-border">
-                            <h4 className="text-sm font-medium text-muted-foreground">Advanced Settings</h4>
-
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Negative Prompt</label>
-                              <textarea
-                                className="w-full min-h-[60px] p-2 rounded-md border border-input bg-background text-sm"
-                                value={negativePrompt}
-                                onChange={(e) => setNegativePrompt(e.target.value)}
-                                placeholder="low quality, blur, distortion..."
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium flex justify-between">
-                                  CFG Scale
-                                  <span className="text-muted-foreground">{cfgScale}</span>
-                                </label>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="1"
-                                  step="0.1"
-                                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-orange-600"
-                                  value={cfgScale}
-                                  onChange={(e) => setCfgScale(e.target.value)}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">Mode</label>
-                                <select
-                                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                                  value={mode}
-                                  onChange={(e) => {
-                                    const newMode = e.target.value;
-                                    setMode(newMode);
-                                    // Reset version if needed, or keep 1.6 if available in both (it is)
-                                    setVersion("1.6");
-                                  }}
-                                >
-                                  <option value="std">Standard</option>
-                                  <option value="pro">Professional</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">Duration</label>
-                                <select
-                                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                                  value={duration}
-                                  onChange={(e) => setDuration(e.target.value)}
-                                >
-                                  <option value="5">5 Seconds</option>
-                                  <option value="10">10 Seconds</option>
-                                </select>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">Version</label>
-                                <select
-                                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                                  value={version}
-                                  onChange={(e) => setVersion(e.target.value)}
-                                >
-                                  {mode === "std" ? (
-                                    <>
-                                      <option value="1.0">1.0</option>
-                                      <option value="1.5">1.5</option>
-                                      <option value="1.6">1.6</option>
-                                      <option value="2.1">2.1</option>
-                                      <option value="2.1-master">2.1-master</option>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <option value="1.0">1.0</option>
-                                      <option value="1.5">1.5</option>
-                                      <option value="1.6">1.6</option>
-                                      <option value="2.0">2.0</option>
-                                      <option value="2.1">2.1</option>
-                                      <option value="2.1-master">2.1-master</option>
-                                    </>
-                                  )}
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            if (localStartFrame) {
-                              const end = localEndFrame || localStartFrame;
-                              onGenerateKlingVideo({
-                                prompt: videoSceneInput,
-                                negativePrompt,
-                                cfgScale,
-                                mode,
-                                duration,
-                                version,
-                                aspectRatio,
-                                startFrame: localStartFrame,
-                                endFrame: end
-                              });
-                            }
-                          }}
-                          disabled={isGeneratingKlingVideo || !videoSceneInput.trim() || !localStartFrame}
-                          className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                        >
-                          {isGeneratingKlingVideo || (videoStatus && videoStatus !== "Failed") ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {videoStatus || "Generating Video..."}
-                            </>
+                        <div className="w-full aspect-video bg-gray-900 rounded-2xl border border-border overflow-hidden relative group shadow-2xl">
+                          {videoUrl ? (
+                            <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
                           ) : (
-                            "Generate Video"
+                            <div className="flex flex-col items-center justify-center h-full text-center p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950">
+                              {isGeneratingKlingVideo || (videoStatus && videoStatus !== "Failed") ? (
+                                <div className="space-y-4">
+                                  <div className="relative">
+                                    <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+                                    <div className="absolute inset-0 blur-lg bg-orange-500/20 animate-pulse"></div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <p className="font-bold text-white text-lg tracking-tight">{videoStatus || "Processing..."}</p>
+                                    <p className="text-xs text-white/40 font-mono uppercase tracking-[0.2em]">Engines Polling</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-3 opacity-40 group-hover:opacity-60 transition-opacity">
+                                  <Video className="w-12 h-12 text-white mx-auto" />
+                                  <p className="text-sm text-white font-medium">Ready for render</p>
+                                </div>
+                              )}
+                            </div>
                           )}
-                        </Button>
+                        </div>
+
+                        {videoUrl && (
+                          <Button className="w-full bg-white text-black hover:bg-gray-100 rounded-xl" variant="outline" asChild>
+                            <a href={videoUrl} download target="_blank" rel="noreferrer">
+                              <Download className="mr-2 h-4 w-4" /> Export Production File
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Advanced Video Controls (Manual Expand/Style) */}
+                {onGenerateKlingVideo && (
+                  <div className="p-10 rounded-[2.5rem] bg-gray-50 border border-border/50 shadow-inner">
+                    <div className="max-w-4xl mx-auto space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                          <div className="space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-widest text-foreground/60">Cinematic Script</Label>
+                            <textarea
+                              className="w-full min-h-[160px] p-5 rounded-2xl border border-border/50 bg-white text-sm leading-relaxed shadow-sm focus:ring-2 ring-orange-500/20 transition-all resize-none"
+                              value={videoSceneInput}
+                              onChange={(e) => setVideoSceneInput(e.target.value)}
+                              placeholder="Describe the scene movement, lighting, and camera dynamics..."
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-widest text-foreground/60">Negative Prompt</Label>
+                            <textarea
+                              className="w-full min-h-[80px] p-4 rounded-2xl border border-border/50 bg-white text-sm leading-relaxed shadow-sm focus:ring-2 ring-orange-500/20 transition-all resize-none"
+                              value={negativePrompt}
+                              onChange={(e) => setNegativePrompt(e.target.value)}
+                              placeholder="blur, jitter, artifacts, distortion..."
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase text-foreground/40">Duration (seconds)</Label>
+                              <select
+                                className="w-full h-11 px-4 rounded-xl border border-border/50 bg-white text-sm font-medium focus:ring-2 ring-primary/20 outline-none"
+                                value={duration}
+                                onChange={(e) => setDuration(e.target.value)}
+                              >
+                                <option value="5">5s (Standard)</option>
+                                <option value="10">10s (High Quality)</option>
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase text-foreground/40">Quality Mode</Label>
+                              <select
+                                className="w-full h-11 px-4 rounded-xl border border-border/50 bg-white text-sm font-medium focus:ring-2 ring-primary/20 outline-none"
+                                value={mode}
+                                onChange={(e) => setMode(e.target.value)}
+                              >
+                                <option value="pro">Pro (Professional)</option>
+                                <option value="std">Standard</option>
+                              </select>
+                            </div>
+                            <div className="col-span-2 space-y-2">
+                              <Label className="text-[10px] font-bold uppercase text-foreground/40">Model Version</Label>
+                              <select
+                                className="w-full h-11 px-4 rounded-xl border border-border/50 bg-white text-sm font-medium focus:ring-2 ring-primary/20 outline-none"
+                                value={version}
+                                onChange={(e) => setVersion(e.target.value)}
+                              >
+                                {mode === "pro" ? (
+                                  <>
+                                    <option value="1.0">1.0</option>
+                                    <option value="1.5">1.5</option>
+                                    <option value="1.6">1.6 (Default)</option>
+                                    <option value="2.0">2.0</option>
+                                    <option value="2.1">2.1</option>
+                                    <option value="2.1 - master">2.1 - Master</option>
+                                  </>
+                                ) : (
+                                  <>
+                                    <option value="1.0">1.0</option>
+                                    <option value="1.5">1.5</option>
+                                    <option value="1.6">1.6 (Default)</option>
+                                    <option value="2.1">2.1</option>
+                                    <option value="2.1 - master">2.1 - Master</option>
+                                  </>
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs font-bold uppercase text-foreground/60">Start Frame</Label>
+                              <div className="aspect-square rounded-2xl border-2 border-dashed border-border/50 bg-white overflow-hidden relative hover:border-orange-500/50 transition-colors group">
+                                {!localStartFrame ? (
+                                  <UploadZone onFileSelected={handleStartFrameSelect} />
+                                ) : (
+                                  <ImagePreview src={localStartPreview!} onChangeImage={() => setLocalStartFrame(null)} />
+                                )}
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs font-bold uppercase text-foreground/60">End Frame</Label>
+                              <div className="aspect-square rounded-2xl border-2 border-dashed border-border/50 bg-white overflow-hidden relative hover:border-orange-500/50 transition-colors group">
+                                {!localEndFrame ? (
+                                  <UploadZone onFileSelected={handleEndFrameSelect} />
+                                ) : (
+                                  <ImagePreview src={localEndPreview!} onChangeImage={() => setLocalEndFrame(null)} />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              if (localStartFrame) {
+                                onGenerateKlingVideo({
+                                  prompt: videoSceneInput,
+                                  negativePrompt,
+                                  cfgScale,
+                                  mode,
+                                  duration,
+                                  version,
+                                  aspectRatio,
+                                  startFrame: localStartFrame,
+                                  endFrame: localEndFrame || localStartFrame
+                                });
+                              }
+                            }}
+                            disabled={isGeneratingKlingVideo || !videoSceneInput.trim() || !localStartFrame}
+                            className="w-full h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-orange-200"
+                          >
+                            {isGeneratingKlingVideo ? <Loader2 className="animate-spin" /> : "Initiate Final Render"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </section>
   );

@@ -73,7 +73,14 @@ export default function Kling() {
     if (taskId && isProcessing) {
       intervalId = setInterval(async () => {
         try {
-          const res = await fetch(`/api/kling-status?taskId=${taskId}`);
+          const res = await fetch(`/api/piapi/kling/task/${taskId}`);
+
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error("[Client] Polling error status:", res.status, errorText);
+            return;
+          }
+
           const data: PiApiTaskResponse = await res.json();
 
           if (data.code === 200) {
@@ -164,22 +171,32 @@ export default function Kling() {
       };
 
       console.log("[Client] Submitting task payload:", payload);
-      const res = await fetch("/api/kling-task", {
+      const res = await fetch("/api/piapi/kling/task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       console.log("[Client] Response received:", res.status, res.statusText);
 
-      const data: PiApiTaskResponse = await res.json();
+      let data: PiApiTaskResponse;
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error("[Client] Received non-JSON response:", text);
+        throw new Error(`Server returned non-JSON response (${res.status}): ${text.substring(0, 100)}`);
+      }
+
       console.log("[Client] Parsed response data:", data);
 
-      if (data.code === 200 && data.data.task_id) {
+      if (res.ok && data.code === 200 && data.data.task_id) {
         setTaskId(data.data.task_id);
         setStatus("Pending...");
         toast.success("Task submitted successfully!");
       } else {
-        throw new Error(data.message || data.data.error?.message || "Submission failed");
+        throw new Error(data.message || data.data.error?.message || `Submission failed with status ${res.status}`);
       }
 
     } catch (e: any) {

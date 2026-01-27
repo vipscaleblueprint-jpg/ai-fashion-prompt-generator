@@ -14,15 +14,20 @@ import ResultsSection from "@/components/ResultsSection";
 import AdvancedSettings from "@/components/AdvancedSettings";
 import { compressImage } from "@/lib/image";
 import { handleImageSubmission } from "@/lib/webhook";
+import { fetchFaceProfile, fetchBodyProfile } from "@/lib/broll-webhook";
+import { fetchMarketingClients, MarketingClient } from "@/lib/marketing-client-webhook";
 import { addHistoryEntry } from "@/lib/history";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function Generator() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [refPreviewUrl, setRefPreviewUrl] = useState<string | null>(null);
+  const [bodyFile, setBodyFile] = useState<File | null>(null);
+  const [bodyPreviewUrl, setBodyPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("Idle");
   const [prompts, setPrompts] = useState<string[] | null>(null);
@@ -55,14 +60,37 @@ export default function Generator() {
   const [clothes, setClothes] = useState("");
   const [clothesColor, setClothesColor] = useState("");
 
+  // Client List State
+  const [useDatabaseProfiles, setUseDatabaseProfiles] = useState(false);
+  const [selectedClient, setSelectedClient] = useState("");
+  const [clientList, setClientList] = useState<MarketingClient[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [isFetchingFaceProfile, setIsFetchingFaceProfile] = useState(false);
+  const [isFetchingBodyProfile, setIsFetchingBodyProfile] = useState(false);
+
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Load clients on mount
+    const loadClients = async () => {
+      setIsLoadingClients(true);
+      try {
+        const clients = await fetchMarketingClients();
+        setClientList(clients);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+    loadClients();
+
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+      if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
     };
-  }, [previewUrl, refPreviewUrl]);
+  }, [previewUrl, refPreviewUrl, bodyPreviewUrl]);
 
   const onFileSelected = (f: File) => {
     setFile(f);
@@ -86,9 +114,51 @@ export default function Generator() {
     setRefFile(null);
     if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
     setRefPreviewUrl(null);
+    setBodyFile(null);
+    if (bodyPreviewUrl) URL.revokeObjectURL(bodyPreviewUrl);
+    setBodyPreviewUrl(null);
     setPrompts(null);
     setError(null);
     setStatus("Idle");
+    setSelectedClient("");
+  };
+
+  const handleClientChange = async (clientName: string) => {
+    setSelectedClient(clientName);
+    if (!clientName) {
+      setPrompts(null);
+      return;
+    }
+
+    // Initialize prompts for 2 analysis slots, preserve existing variants
+    setPrompts(prev => {
+      const current = prev || ["", ""];
+      return ["", "", ...current.slice(2)];
+    });
+
+    // Fetch Face Profile
+    setIsFetchingFaceProfile(true);
+    fetchFaceProfile(clientName).then(facePrompt => {
+      if (facePrompt) {
+        setPrompts(prev => {
+          const current = prev || ["", ""];
+          return [facePrompt, current[1] || "", ...current.slice(2)];
+        });
+      }
+      setIsFetchingFaceProfile(false);
+    });
+
+    // Fetch Body Profile
+    setIsFetchingBodyProfile(true);
+    fetchBodyProfile(clientName).then(bodyPrompt => {
+      if (bodyPrompt) {
+        setPrompts(prev => {
+          const current = prev || ["", ""];
+          return [current[0] || "", bodyPrompt, ...current.slice(2)];
+        });
+      }
+      setIsFetchingBodyProfile(false);
+    });
   };
 
   const startProgressMessages = () => {
@@ -114,7 +184,7 @@ export default function Generator() {
     abortRef.current = controller;
     try {
       const compressed = await compressImage(file);
-      const out = await handleImageSubmission(compressed, refFile, {
+      const out = await handleImageSubmission(compressed, useDatabaseProfiles ? null : refFile, useDatabaseProfiles ? null : bodyFile, {
         signal: controller.signal,
         mode,
         ethnicity,
@@ -136,9 +206,39 @@ export default function Generator() {
         fashionStyle,
         clothes,
         clothesColor,
+        client: useDatabaseProfiles ? (selectedClient || undefined) : undefined,
+        database_profile_enabled: useDatabaseProfiles,
       });
-      // Display all prompts from the webhook response
-      setPrompts(out);
+
+      // Mapping logic: handle [Face, Body, ...Fashion] slots
+      if (useDatabaseProfiles) {
+        setPrompts(prev => {
+          const current = prev || ["", "", ""];
+          // If 'out' contains the analysis text that we already have in 'current', skip it.
+          // normalizeToPrompts prepends faceAnalysis if it found one.
+          let variants = [...out];
+          if (variants.length > 0 && variants[0].toLowerCase().includes("face analysis")) {
+            variants = variants.slice(1);
+          }
+          return [current[0] || "", current[1] || "", ...variants];
+        });
+      } else {
+        // Adapt 'out' to [Face, Body, ...Fashion]
+        if (refFile && bodyFile) {
+          // out[0]=Face, out[1]=Body, out[2+]=Variants
+          setPrompts(out);
+        } else if (refFile && !bodyFile) {
+          // out[0]=Face, out[1+]=Variants. Insert empty slot for Body at index 1.
+          setPrompts([out[0] || "", "", ...out.slice(1)]);
+        } else if (!refFile && bodyFile) {
+          // If refFile is missing but bodyFile is present, out[0] is Body analysis.
+          // Insert empty slot for Face at index 0.
+          setPrompts(["", out[0] || "", ...out.slice(1)]);
+        } else {
+          // Only variants. Insert empty slots for Face and Body.
+          setPrompts(["", "", ...out]);
+        }
+      }
       // Persist to history with the original file (not compressed, for better thumbnail quality)
       try {
         await addHistoryEntry({ file, prompts: out });
@@ -179,27 +279,92 @@ export default function Generator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
-          {!file ? (
-            <UploadZone onFileSelected={onFileSelected} />
-          ) : (
-            <ImagePreview src={previewUrl!} onChangeImage={resetAll} />
-          )}
-
-          <div className="space-y-2">
-            <Label>Reference Face Analyzer (Optional)</Label>
-            {!refFile ? (
-              <UploadZone onFileSelected={onRefFileSelected} />
-            ) : (
-              <ImagePreview
-                src={refPreviewUrl!}
-                onChangeImage={() => {
-                  setRefFile(null);
-                  if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
-                  setRefPreviewUrl(null);
+          <div className="flex flex-col space-y-3 p-5 rounded-2xl border-2 border-primary/20 bg-primary/5 shadow-sm mb-2">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="database-profiles" className="text-lg font-bold text-primary flex items-center gap-2">
+                  Database Profiles
+                  <Sparkles className="w-4 h-4" />
+                </Label>
+                <p className="text-sm text-foreground/70">Enable to fetch client data from your database</p>
+              </div>
+              <Switch
+                id="database-profiles"
+                className="scale-125 data-[state=checked]:bg-primary"
+                checked={useDatabaseProfiles}
+                onCheckedChange={(checked) => {
+                  setUseDatabaseProfiles(checked);
+                  if (!checked) setSelectedClient("");
                 }}
               />
+            </div>
+            {useDatabaseProfiles && (
+              <div className="pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="space-y-2">
+                  <Label htmlFor="client" className="text-sm font-semibold">Client List</Label>
+                  <Select value={selectedClient} onValueChange={handleClientChange}>
+                    <SelectTrigger id="client" disabled={isLoadingClients} className="bg-background">
+                      <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Select a Client"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientList.map((client, index) => (
+                        <SelectItem key={`${client.clockify_id}-${client.clickup_id}-${client.client_name}-${index}`} value={client.client_name}>
+                          {client.client_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             )}
           </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground/80">Main Fashion Image</h3>
+            {!file ? (
+              <UploadZone onFileSelected={onFileSelected} />
+            ) : (
+              <ImagePreview src={previewUrl!} onChangeImage={resetAll} />
+            )}
+          </div>
+
+          {!useDatabaseProfiles && (
+            <>
+              <div className="space-y-2 border-t border-dashed border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold text-foreground/80">Reference Face Analyzer (Optional)</Label>
+                  {refFile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setRefFile(null);
+                        if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+                        setRefPreviewUrl(null);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {!refFile ? (
+                  <div className="scale-90 origin-top-left w-[111%]">
+                    <UploadZone onFileSelected={onRefFileSelected} />
+                  </div>
+                ) : (
+                  <ImagePreview
+                    src={refPreviewUrl!}
+                    onChangeImage={() => {
+                      setRefFile(null);
+                      if (refPreviewUrl) URL.revokeObjectURL(refPreviewUrl);
+                      setRefPreviewUrl(null);
+                    }}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -261,8 +426,12 @@ export default function Generator() {
 
           <ResultsSection
             prompts={prompts}
-            labels={refFile ? ["Face Analysis Prompt", "Fashion Prompt"] : undefined}
-            combinedPromptFooter={refFile ? "using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification." : undefined}
+            isFetchingFaceProfile={isFetchingFaceProfile}
+            isFetchingBodyProfile={isFetchingBodyProfile}
+            onRegenerate={handleGenerate}
+            isLoading={isLoading}
+            labels={["Face Analysis Prompt", "Body Analysis Prompt"]}
+            combinedPromptFooter={(refFile || bodyFile || useDatabaseProfiles) ? "using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification." : undefined}
           />
 
           {!prompts && (
@@ -285,7 +454,9 @@ export default function Generator() {
                       <Loader2 className="mr-2 animate-spin" /> Generating...
                     </>
                   ) : (
-                    "Generate Prompts"
+                    (useDatabaseProfiles && selectedClient)
+                      ? `Generate for ${selectedClient}`
+                      : "Generate Prompts"
                   )}
                 </Button>
                 {isLoading && (
