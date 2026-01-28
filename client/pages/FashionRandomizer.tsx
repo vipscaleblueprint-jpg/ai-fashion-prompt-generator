@@ -22,8 +22,8 @@ export default function FashionRandomizer() {
     const [prompts, setPrompts] = useState<string[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Theme State
-    const [theme, setTheme] = useState("");
+    // Theme / Fashion Style State
+    const [fashionStyle, setFashionStyle] = useState("");
 
     // Advanced Settings State
     const [ethnicity, setEthnicity] = useState("");
@@ -40,6 +40,14 @@ export default function FashionRandomizer() {
     const [nose, setNose] = useState("");
     const [mouth, setMouth] = useState("");
     const [ears, setEars] = useState("");
+
+    // Fashion Settings
+    const [clothes, setClothes] = useState("");
+    const [clothesColor, setClothesColor] = useState("");
+
+    // Transformation Settings
+    const [transformHead, setTransformHead] = useState(false);
+    const [angle, setAngle] = useState("");
 
     // Background Environment
     const [backgroundEnvironment, setBackgroundEnvironment] = useState("");
@@ -69,7 +77,7 @@ export default function FashionRandomizer() {
     };
 
     const handleGenerate = async () => {
-        if (!theme) {
+        if (!fashionStyle) {
             setError("Please select a fashion theme.");
             return;
         }
@@ -83,7 +91,8 @@ export default function FashionRandomizer() {
 
         try {
             const formData = new FormData();
-            formData.append("theme", theme);
+            formData.append("theme", fashionStyle);
+            formData.append("fashionStyle", fashionStyle);
             if (ethnicity) formData.append("ethnicity", ethnicity);
             if (gender) formData.append("gender", gender);
             if (skinColor) formData.append("skinColor", skinColor);
@@ -99,12 +108,17 @@ export default function FashionRandomizer() {
             if (ears) formData.append("ears", ears);
 
             if (backgroundEnvironment) formData.append("backgroundEnvironment", backgroundEnvironment);
+            if (clothes) formData.append("clothes", clothes);
+            if (clothesColor) formData.append("clothesColor", clothesColor);
+            if (transformHead) formData.append("transformHead", String(transformHead));
+            if (angle) formData.append("angle", angle);
 
             // Add isnotempty flag if any advanced setting is set (mimicking fake avatar logic just in case)
             const hasAdvancedSettings = [
                 ethnicity, gender, skinColor, hairColor, facialExpression,
-                bodyComposition, imperfection, eyes, eyebrows, nose, mouth, ears, backgroundEnvironment
-            ].some(val => val && val.trim() !== "") || exactFacialStructure;
+                bodyComposition, imperfection, eyes, eyebrows, nose, mouth, ears,
+                backgroundEnvironment, clothes, clothesColor, angle
+            ].some(val => val && val.trim() !== "") || exactFacialStructure || transformHead;
 
             if (hasAdvancedSettings) {
                 formData.append("isnotempty", "true");
@@ -230,12 +244,12 @@ export default function FashionRandomizer() {
                         {THEMES.map((t) => (
                             <Button
                                 key={t}
-                                variant={theme === t ? "default" : "outline"}
-                                onClick={() => setTheme(t)}
+                                variant={fashionStyle === t ? "default" : "outline"}
+                                onClick={() => setFashionStyle(t)}
                                 disabled={t === "Flora/Beach"}
                                 className={cn(
                                     "h-auto py-4 px-2 flex flex-col gap-2 items-center justify-center text-center whitespace-normal",
-                                    theme === t ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50",
+                                    fashionStyle === t ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50",
                                     t === "Flora/Beach" && "opacity-50 cursor-not-allowed"
                                 )}
                             >
@@ -248,7 +262,7 @@ export default function FashionRandomizer() {
                 {/* Advanced Settings - Shown only after theme is selected (or we can just show it) 
                     User requested: "when select one of that it will then show the advance settings"
                 */}
-                {theme && (
+                {fashionStyle && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="mb-2">
                             <h2 className="text-lg font-semibold text-foreground mb-4">
@@ -285,6 +299,18 @@ export default function FashionRandomizer() {
 
                             backgroundEnvironment={backgroundEnvironment}
                             setBackgroundEnvironment={setBackgroundEnvironment}
+
+                            fashionStyle={fashionStyle}
+                            setFashionStyle={setFashionStyle}
+                            clothes={clothes}
+                            setClothes={setClothes}
+                            clothesColor={clothesColor}
+                            setClothesColor={setClothesColor}
+
+                            transformHead={transformHead}
+                            setTransformHead={setTransformHead}
+                            angle={angle}
+                            setAngle={setAngle}
                         />
 
                         {!prompts && (

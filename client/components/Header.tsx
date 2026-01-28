@@ -33,7 +33,7 @@ export default function Header() {
         { to: "/broll-to-prompt", label: "B-Roll Scene to Prompt" },
         { to: "/broll-to-prompt-2", label: "B-Roll Image to Prompt 2.0" },
         { to: "/broll-to-prompt-3", label: "Broll Scene Image Upload" },
-        { to: "/fake-avatar-generator", label: "Fake Avatar Generator" },
+        { to: "/fake-avatar-generator", label: "No Limiter Scene To Prompt" },
         { to: "/face-analyzer", label: "Analyzers" },
         { to: "/kling", label: "Kling" },
 

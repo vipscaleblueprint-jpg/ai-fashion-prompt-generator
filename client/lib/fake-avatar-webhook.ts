@@ -16,20 +16,98 @@ type VariationItem = {
 };
 
 async function normalizeToPrompts(data: unknown): Promise<string[]> {
-    if (!data) return [];
-    if (Array.isArray(data)) {
-        return (data as any[])
-            .map((it) => it?.input?.prompt)
-            .filter((p): p is string => typeof p === "string");
+    console.log("[normalizeToPrompts] Received data:", JSON.stringify(data, null, 2));
+    if (!data) {
+        console.warn("[normalizeToPrompts] Data is empty");
+        return [];
     }
+
+    // Handle the new format: Array of { content: { parts: [ { text: "..." } ] } }
+    if (Array.isArray(data)) {
+        console.log("[normalizeToPrompts] Processing array of length:", data.length);
+
+        // NEW: Check for the special ANALYSIS structure first
+        const firstItem = data[0] as any;
+        if (firstItem?.ANALYSIS && Array.isArray(firstItem.ANALYSIS)) {
+            console.log("[normalizeToPrompts] Found ANALYSIS structure");
+            const analysis = firstItem.ANALYSIS;
+            let sceneStr = "";
+            let faceStr = "";
+
+            analysis.forEach((item: any) => {
+                if (item?.scene) sceneStr = item.scene;
+                if (item?.scene_analysis) sceneStr = item.scene_analysis;
+                if (item?.face_analysis) faceStr = item.face_analysis;
+            });
+
+            // Return [face, scene] so Face is top, Scene is bottom in combined view
+            return [faceStr, sceneStr].filter(Boolean);
+        }
+
+        const prompts = (data as any[])
+            .map((it, index) => {
+                // Check for different possible structures
+                if (it?.content?.parts?.[0]?.text) {
+                    console.log(`[normalizeToPrompts] Found content.parts[0].text at index ${index}`);
+                    return it.content.parts[0].text;
+                }
+                if (it?.output) {
+                    console.log(`[normalizeToPrompts] Found output at index ${index}`);
+                    return it.output;
+                }
+                if (it?.input?.prompt) {
+                    console.log(`[normalizeToPrompts] Found input.prompt at index ${index}`);
+                    return it.input.prompt;
+                }
+                if (typeof it === "string") {
+                    console.log(`[normalizeToPrompts] Found string at index ${index}`);
+                    return it;
+                }
+                console.warn(`[normalizeToPrompts] No prompt found at index ${index}`, it);
+                return null;
+            })
+            .filter((p): p is string => typeof p === "string");
+
+        console.log("[normalizeToPrompts] Extracted prompts:", prompts);
+        if (prompts.length > 0) return prompts;
+    }
+
     if (typeof data === "object") {
         const obj = data as any;
+        console.log("[normalizeToPrompts] Processing object");
+
+        // Check for single object instead of array
+        if (obj?.content?.parts?.[0]?.text) {
+            console.log("[normalizeToPrompts] Found content.parts[0].text in object");
+            return [obj.content.parts[0].text];
+        }
+
+        if (obj?.output) {
+            console.log("[normalizeToPrompts] Found output in object");
+            return [obj.output];
+        }
+
         if (Array.isArray(obj.input)) {
-            return obj.input
-                .map((x: any) => x?.prompt)
+            console.log("[normalizeToPrompts] Processing obj.input array");
+            const prompts = obj.input
+                .map((x: any, index: number) => {
+                    if (typeof x?.prompt === "string") return x.prompt;
+                    console.warn(`[normalizeToPrompts] No prompt found in obj.input at index ${index}`, x);
+                    return null;
+                })
                 .filter((p: any): p is string => typeof p === "string");
+
+            console.log("[normalizeToPrompts] Extracted prompts from obj.input:", prompts);
+            return prompts;
         }
     }
+
+    if (typeof data === "string") {
+        console.log("[normalizeToPrompts] Found raw string");
+        return [data];
+    }
+
+    console.warn("[normalizeToPrompts] Falling back to empty array");
     return [];
 }
 
@@ -53,6 +131,11 @@ export async function handleFakeAvatarSubmission(
         angle?: string;
         backgroundEnvironment?: string;
         pose?: string;
+        fashionStyle?: string;
+        clothes?: string;
+        clothesColor?: string;
+        faceFile?: File | Blob;
+        sceneFile?: File | Blob;
     },
 ): Promise<string[]> {
     const formData = new FormData();
@@ -71,10 +154,23 @@ export async function handleFakeAvatarSubmission(
     if (opts?.nose) formData.append("nose", opts.nose);
     if (opts?.mouth) formData.append("mouth", opts.mouth);
     if (opts?.ears) formData.append("ears", opts.ears);
+    if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
+    if (opts?.clothes) formData.append("clothes", opts.clothes);
+    if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
     if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
     if (opts?.angle) formData.append("angle", opts.angle);
     if (opts?.backgroundEnvironment) formData.append("backgroundEnvironment", opts.backgroundEnvironment);
     if (opts?.pose) formData.append("pose", opts.pose);
+
+    // Add image files if present
+    if (opts?.faceFile) {
+        formData.append("face_file", opts.faceFile);
+        formData.append("has_face_file", "true");
+    }
+    if (opts?.sceneFile) {
+        formData.append("scene_file", opts.sceneFile);
+        formData.append("has_scene_file", "true");
+    }
 
     // Check if any advanced settings are populated
     const hasAdvancedSettings = [
@@ -94,8 +190,13 @@ export async function handleFakeAvatarSubmission(
         opts?.transformHead ? "true" : "",
         opts?.angle,
         opts?.backgroundEnvironment,
+        opts?.fashionStyle,
+        opts?.clothes,
+        opts?.clothesColor,
         opts?.pose,
-    ].some(val => val && val.trim() !== "");
+        opts?.faceFile ? "true" : "",
+        opts?.sceneFile ? "true" : "",
+    ].some(val => val && val.toString().trim() !== "");
 
     if (hasAdvancedSettings) {
         formData.append("isnotempty", "true");
@@ -143,7 +244,15 @@ export async function handleFakeAvatarSubmission(
     });
 
     if (!proxyRes.ok) {
-        throw new Error(`Proxy upload failed with status ${proxyRes.status}`);
+        let errorMessage = `Proxy upload failed with status ${proxyRes.status}`;
+        try {
+            const errorData = await proxyRes.json();
+            if (errorData.message) errorMessage = errorData.message;
+            else if (errorData.error) errorMessage = errorData.error;
+        } catch {
+            // Not JSON or no message
+        }
+        throw new Error(errorMessage);
     }
 
     const proxyCt = proxyRes.headers.get("content-type") || "";

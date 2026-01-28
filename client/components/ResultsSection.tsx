@@ -39,6 +39,7 @@ interface ResultsSectionProps {
   // Regeneration Props
   onRegenerate?: () => void;
   isLoading?: boolean;
+  hideAnalysis?: boolean;
 }
 
 function download(filename: string, content: string, type: string) {
@@ -67,7 +68,8 @@ export default function ResultsSection({
   videoUrl,
   onGenerateKlingVideo,
   onRegenerate,
-  isLoading: isRegenerating
+  isLoading: isRegenerating,
+  hideAnalysis = false
 }: ResultsSectionProps) {
   const hasPrompts = (prompts && prompts.length > 0);
   const showSection = hasPrompts || isFetchingFaceProfile || isFetchingBodyProfile;
@@ -310,7 +312,7 @@ export default function ResultsSection({
 
           <div className="space-y-8">
             {/* Analysis Row: Face & Body */}
-            {(isFetchingFaceProfile || isFetchingBodyProfile || (hasPrompts && prompts!.slice(0, 2).some(p => p))) && (
+            {!hideAnalysis && (isFetchingFaceProfile || isFetchingBodyProfile || (hasPrompts && prompts!.slice(0, 2).some(p => p))) && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
@@ -319,14 +321,14 @@ export default function ResultsSection({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {(isFetchingFaceProfile || (hasPrompts && prompts![0])) && (
                     <PromptCard
-                      title="Face Analysis Prompt"
+                      title={getTitle(0)}
                       prompt={prompts ? (prompts[0] || "") : ""}
                       isLoading={isFetchingFaceProfile}
                     />
                   )}
                   {(isFetchingBodyProfile || (hasPrompts && prompts![1])) && (
                     <PromptCard
-                      title="Body Analysis Prompt"
+                      title={getTitle(1)}
                       prompt={prompts ? (prompts[1] || "") : ""}
                       isLoading={isFetchingBodyProfile}
                     />
