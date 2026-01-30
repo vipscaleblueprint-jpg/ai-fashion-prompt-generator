@@ -6,6 +6,7 @@ import UploadZone from "@/components/UploadZone";
 import ImagePreview from "@/components/ImagePreview";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface ResultsSectionProps {
   prompts: string[] | null;
@@ -81,6 +82,10 @@ export default function ResultsSection({
   // Track which fashion prompt is selected for combining
   const [selectedFashionPromptIndex, setSelectedFashionPromptIndex] = useState<number>(0);
 
+  // Ultra Wide Shot state
+  const [isUltraWide, setIsUltraWide] = useState(false);
+  const ULTRA_WIDE_FOOTER = "Show the person from the reference image in an ultra-wide shot that emphasizes the surrounding environment, with the subject being a smaller, detailed part of the overall scene, maintain their exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person in the reference image, without alteration or beautification.";
+
   // Local state for video generator
   const [videoSceneInput, setVideoSceneInput] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -144,9 +149,11 @@ export default function ResultsSection({
 
     let result = uniqueParts.join("\n\n");
 
-    // Always add the footer if it exists
-    if (combinedPromptFooter) {
-      result = result + "\n\n" + combinedPromptFooter;
+    // Select the footer based on ultra-wide toggle
+    const finalFooter = isUltraWide ? ULTRA_WIDE_FOOTER : combinedPromptFooter;
+
+    if (finalFooter) {
+      result = result + "\n\n" + finalFooter;
     }
 
     return result;
@@ -230,7 +237,8 @@ export default function ResultsSection({
       if (!res.ok) throw new Error("Randomization failed");
       const data = await res.json();
       let result = typeof data === "string" ? data : (data[0]?.output || data?.output || JSON.stringify(data));
-      if (combinedPromptFooter) result = result + "\n\n" + combinedPromptFooter;
+      const finalFooter = isUltraWide ? ULTRA_WIDE_FOOTER : combinedPromptFooter;
+      if (finalFooter) result = result + "\n\n" + finalFooter;
       setRandomizedCombinedPrompt(result);
       toast.success("Combined prompt randomized successfully");
     } catch (error) {
@@ -381,9 +389,21 @@ export default function ResultsSection({
             {/* Master Master Box: The focal point */}
             {hasPrompts && prompts!.some(p => p.trim() !== "") && (
               <div className="space-y-4 pt-6">
-                <div className="flex items-center gap-2 px-1">
-                  <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Master Output</h3>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/60">Master Output</h3>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20 shadow-sm transition-all hover:bg-amber-500/15">
+                    <Label htmlFor="ultra-wide" className="text-[10px] font-bold uppercase tracking-wider text-amber-700 cursor-pointer">Ultra Wide Shot</Label>
+                    <Switch
+                      id="ultra-wide"
+                      checked={isUltraWide}
+                      onCheckedChange={setIsUltraWide}
+                      className="scale-75 data-[state=checked]:bg-amber-500"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
                   <PromptCard
