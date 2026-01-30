@@ -39,6 +39,7 @@ export default function FakeAvatarGenerator() {
     // Transformation Settings
     const [transformHead, setTransformHead] = useState(false);
     const [angle, setAngle] = useState("");
+    const [cameraAngleImperfection, setCameraAngleImperfection] = useState("");
 
     // Background Environment
     const [backgroundEnvironment, setBackgroundEnvironment] = useState("");
@@ -96,6 +97,7 @@ export default function FakeAvatarGenerator() {
         setClothesColor("");
         setTransformHead(false);
         setAngle("");
+        setCameraAngleImperfection("");
         setBackgroundEnvironment("");
         setPrompts(null);
         setError(null);
@@ -155,6 +157,7 @@ export default function FakeAvatarGenerator() {
                 clothesColor,
                 transformHead,
                 angle: angle || "default",
+                cameraAngleImperfection: cameraAngleImperfection || "default",
                 backgroundEnvironment,
                 faceFile: faceFile || undefined,
                 sceneFile: sceneFile || undefined,
@@ -291,6 +294,8 @@ export default function FakeAvatarGenerator() {
                             setTransformHead={setTransformHead}
                             angle={angle}
                             setAngle={setAngle}
+                            cameraAngleImperfection={cameraAngleImperfection}
+                            setCameraAngleImperfection={setCameraAngleImperfection}
                         />
 
                         {/* Action Section */}
@@ -348,7 +353,7 @@ export default function FakeAvatarGenerator() {
                                         prompts={prompts}
                                         hideAnalysis={false}
                                         labels={["Facial Analysis", "Scene Analysis"]}
-                                        combinedPromptFooter={`using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person or people in the reference image, without alteration or beautification. ${fashionStyle ? `The fashion style must be ${fashionStyle}.` : ""} ${clothes ? `Wearing ${clothes}.` : ""} ${clothesColor ? `The color of the clothes is ${clothesColor}.` : ""} ${backgroundEnvironment ? `The environment is ${backgroundEnvironment}.` : ""} ${transformHead ? `Presented as a talking head with a ${angle || "close-up"} camera angle.` : ""}`}
+                                        combinedPromptFooter={`using the exact facial structure, eyes, eyebrows, nose, mouth, ears, hair, skin tone, and details of the person or people in the reference image, without alteration or beautification. ${fashionStyle ? `The fashion style must be ${fashionStyle}.` : ""} ${clothes ? `Wearing ${clothes}.` : ""} ${clothesColor ? `The color of the clothes is ${clothesColor}.` : ""} ${backgroundEnvironment ? `The environment is ${backgroundEnvironment}.` : ""} ${transformHead ? `Presented as a talking head with a ${angle || "close-up"} camera angle.` : ""} ${cameraAngleImperfection ? `The camera angle features a ${cameraAngleImperfection}.` : ""}`}
                                     />
                                 </div>
 

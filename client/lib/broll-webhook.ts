@@ -96,6 +96,7 @@ export async function handleBrollImageSubmission(
     fashionStyle?: string;
     clothes?: string;
     clothesColor?: string;
+    cameraAngleImperfection?: string;
     client?: string;
     database_profile_enabled?: boolean;
   },
@@ -125,6 +126,7 @@ export async function handleBrollImageSubmission(
   if (opts?.fashionStyle) formData.append("fashionStyle", opts.fashionStyle);
   if (opts?.clothes) formData.append("clothes", opts.clothes);
   if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
+  if (opts?.cameraAngleImperfection) formData.append("cameraAngleImperfection", opts.cameraAngleImperfection);
   if (opts?.client) formData.append("client", opts.client);
   if (opts?.database_profile_enabled !== undefined) {
     formData.append("database_profile_enabled", String(opts.database_profile_enabled));
@@ -184,6 +186,7 @@ export async function handleBrollImageSubmission(
     opts?.fashionStyle,
     opts?.clothes,
     opts?.clothesColor,
+    opts?.cameraAngleImperfection,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {
@@ -280,6 +283,7 @@ export async function handleBrollImageSubmission2(
     clothesColor?: string;
     fashionStyle?: string;
     clothes?: string;
+    cameraAngleImperfection?: string;
     client?: string;
     database_profile_enabled?: boolean;
   },
@@ -326,6 +330,7 @@ export async function handleBrollImageSubmission2(
     opts?.fashionStyle,
     opts?.clothes,
     opts?.clothesColor,
+    opts?.cameraAngleImperfection,
   ].some(val => val && val.trim() !== "");
 
   if (opts?.transformHead && !hasTalkingHeadConflictingFields) {
@@ -353,6 +358,7 @@ export async function handleBrollImageSubmission2(
     opts?.fashionStyle,
     opts?.clothes,
     opts?.clothesColor,
+    opts?.cameraAngleImperfection,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {

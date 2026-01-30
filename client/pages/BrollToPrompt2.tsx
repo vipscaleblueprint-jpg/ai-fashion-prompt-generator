@@ -86,6 +86,7 @@ export default function BrollToPrompt2() {
     // Transform Head
     const [transformHead, setTransformHead] = useState(false);
     const [angle, setAngle] = useState("");
+    const [cameraAngleImperfection, setCameraAngleImperfection] = useState("");
 
     // Fashion Settings
     const [fashionStyle, setFashionStyle] = useState("");
@@ -311,6 +312,7 @@ export default function BrollToPrompt2() {
         setPrompts(null);
         setError(null);
         setStatus("Idle");
+        setCameraAngleImperfection("");
         // Hide upload section when resetting
         setIsUploadSectionOpen(false);
         // Restore all search results
@@ -367,6 +369,7 @@ export default function BrollToPrompt2() {
                 fashionStyle,
                 clothes,
                 clothesColor,
+                cameraAngleImperfection: cameraAngleImperfection || "default",
                 client: selectedClient || undefined,
                 database_profile_enabled: !!selectedClient,
             });
@@ -741,6 +744,8 @@ export default function BrollToPrompt2() {
                         setClothes={setClothes}
                         clothesColor={clothesColor}
                         setClothesColor={setClothesColor}
+                        cameraAngleImperfection={cameraAngleImperfection}
+                        setCameraAngleImperfection={setCameraAngleImperfection}
                     />
 
                     {(prompts || isFetchingFaceProfile || isFetchingBodyProfile) && (

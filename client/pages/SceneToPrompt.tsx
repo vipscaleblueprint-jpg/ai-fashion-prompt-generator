@@ -36,6 +36,7 @@ export default function SceneToPrompt() {
   // Transform Head
   const [transformHead, setTransformHead] = useState(false);
   const [angle, setAngle] = useState("");
+  const [cameraAngleImperfection, setCameraAngleImperfection] = useState("");
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -60,6 +61,7 @@ export default function SceneToPrompt() {
     setPrompts(null);
     setError(null);
     setStatus("Idle");
+    setCameraAngleImperfection("");
   };
 
   const startProgressMessages = () => {
@@ -101,7 +103,8 @@ export default function SceneToPrompt() {
         mouth,
         ears,
         transformHead,
-        angle,
+        angle: angle || "default",
+        cameraAngleImperfection: cameraAngleImperfection || "default",
       });
       // Only use the first prompt (1 variation)
       const singlePrompt = out.length > 0 ? [out[0]] : [];
@@ -185,6 +188,8 @@ export default function SceneToPrompt() {
             setTransformHead={setTransformHead}
             angle={angle}
             setAngle={setAngle}
+            cameraAngleImperfection={cameraAngleImperfection}
+            setCameraAngleImperfection={setCameraAngleImperfection}
           />
 
           {!prompts && (

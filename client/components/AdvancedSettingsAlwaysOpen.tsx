@@ -59,18 +59,20 @@ export interface AdvancedSettingsAlwaysOpenProps {
     setPose?: (value: string) => void;
 
     // Fashion Settings (New)
-    fashionStyle: string;
-    setFashionStyle: (value: string) => void;
-    clothes: string;
-    setClothes: (value: string) => void;
-    clothesColor: string;
-    setClothesColor: (value: string) => void;
+    fashionStyle?: string;
+    setFashionStyle?: (value: string) => void;
+    clothes?: string;
+    setClothes?: (value: string) => void;
+    clothesColor?: string;
+    setClothesColor?: (value: string) => void;
 
     // Transformation Settings (New)
     transformHead: boolean;
     setTransformHead: (value: boolean) => void;
-    angle: string;
-    setAngle: (value: string) => void;
+    angle?: string;
+    setAngle?: (value: string) => void;
+    cameraAngleImperfection?: string;
+    setCameraAngleImperfection?: (value: string) => void;
     // Coming Soon mode
     comingSoon?: boolean;
 }
@@ -119,6 +121,8 @@ export default function AdvancedSettingsAlwaysOpen({
     setTransformHead,
     angle,
     setAngle,
+    cameraAngleImperfection,
+    setCameraAngleImperfection,
     comingSoon = false,
 }: AdvancedSettingsAlwaysOpenProps) {
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
@@ -127,6 +131,7 @@ export default function AdvancedSettingsAlwaysOpen({
     const [isEnvExpanded, setIsEnvExpanded] = useState(false);
     const [isFashionExpanded, setIsFashionExpanded] = useState(false);
     const [isTransformationExpanded, setIsTransformationExpanded] = useState(false);
+    const [isCameraImperfectionExpanded, setIsCameraImperfectionExpanded] = useState(false);
     const [isFashionManual, setIsFashionManual] = useState(false);
 
     // Parse existing ethnicity value on mount
@@ -588,6 +593,42 @@ export default function AdvancedSettingsAlwaysOpen({
                                 </p>
                             </div>
                         )}
+                    </div>
+                )}
+            </div>
+
+            {/* Camera Angle Imperfections */}
+            <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+                <div
+                    className="flex items-center justify-between group cursor-pointer"
+                    onClick={() => setIsCameraImperfectionExpanded(!isCameraImperfectionExpanded)}
+                >
+                    <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-foreground/60 transition-colors group-hover:text-foreground">
+                        <span className="h-1 w-4 rounded-full bg-blue-500" />
+                        Camera Angle Imperfections
+                        <span className="ml-2 rounded-md bg-accent/50 px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Optional</span>
+                    </h3>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        {isCameraImperfectionExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                </div>
+
+                {isCameraImperfectionExpanded && (
+                    <div className="grid gap-6 mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Angle Selection</Label>
+                            <Select value={cameraAngleImperfection} onValueChange={setCameraAngleImperfection}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Imperfection" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Slightly noticeable tilt (6° roll)">Slightly noticeable tilt (6° roll)</SelectItem>
+                                    <SelectItem value="Moderate tilt (8° roll)">Moderate tilt (8° roll)</SelectItem>
+                                    <SelectItem value="Strong tilt (10° roll)">Strong tilt (10° roll)</SelectItem>
+                                    <SelectItem value="Pronounced tilt (12° roll)">Pronounced tilt (12° roll)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 )}
             </div>

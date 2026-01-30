@@ -52,6 +52,7 @@ export default function Generator() {
   // Transform Head
   const [transformHead, setTransformHead] = useState(false);
   const [angle, setAngle] = useState("");
+  const [cameraAngleImperfection, setCameraAngleImperfection] = useState("");
   // Pose
   const [pose, setPose] = useState("");
 
@@ -201,11 +202,12 @@ export default function Generator() {
         mouth,
         ears,
         transformHead,
-        angle,
+        angle: angle || "default",
         pose,
         fashionStyle,
         clothes,
         clothesColor,
+        cameraAngleImperfection: cameraAngleImperfection || "default",
         client: useDatabaseProfiles ? (selectedClient || undefined) : undefined,
         database_profile_enabled: useDatabaseProfiles,
       });
@@ -422,6 +424,8 @@ export default function Generator() {
             setClothes={setClothes}
             clothesColor={clothesColor}
             setClothesColor={setClothesColor}
+            cameraAngleImperfection={cameraAngleImperfection}
+            setCameraAngleImperfection={setCameraAngleImperfection}
           />
 
           <ResultsSection

@@ -52,6 +52,7 @@ export async function handleSceneImageSubmission(
     ears?: string;
     transformHead?: boolean;
     angle?: string;
+    cameraAngleImperfection?: string;
   },
 ): Promise<string[]> {
   // SCENE_WEBHOOK_URL is always set via env or default
@@ -73,6 +74,7 @@ export async function handleSceneImageSubmission(
   if (opts?.ears) formData.append("ears", opts.ears);
   if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
   if (opts?.angle) formData.append("angle", opts.angle);
+  if (opts?.cameraAngleImperfection) formData.append("cameraAngleImperfection", opts.cameraAngleImperfection);
 
   // Check if any advanced settings are populated
   const hasAdvancedSettings = [
@@ -91,6 +93,7 @@ export async function handleSceneImageSubmission(
     opts?.ears,
     opts?.transformHead ? "true" : "",
     opts?.angle,
+    opts?.cameraAngleImperfection,
   ].some(val => val && val.trim() !== "");
 
   if (hasAdvancedSettings) {

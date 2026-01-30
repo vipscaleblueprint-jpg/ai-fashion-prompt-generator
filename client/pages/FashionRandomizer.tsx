@@ -48,6 +48,7 @@ export default function FashionRandomizer() {
     // Transformation Settings
     const [transformHead, setTransformHead] = useState(false);
     const [angle, setAngle] = useState("");
+    const [cameraAngleImperfection, setCameraAngleImperfection] = useState("");
 
     // Background Environment
     const [backgroundEnvironment, setBackgroundEnvironment] = useState("");
@@ -111,13 +112,14 @@ export default function FashionRandomizer() {
             if (clothes) formData.append("clothes", clothes);
             if (clothesColor) formData.append("clothesColor", clothesColor);
             if (transformHead) formData.append("transformHead", String(transformHead));
-            if (angle) formData.append("angle", angle);
+            formData.append("angle", angle || "default");
+            formData.append("cameraAngleImperfection", cameraAngleImperfection || "default");
 
             // Add isnotempty flag if any advanced setting is set (mimicking fake avatar logic just in case)
             const hasAdvancedSettings = [
                 ethnicity, gender, skinColor, hairColor, facialExpression,
                 bodyComposition, imperfection, eyes, eyebrows, nose, mouth, ears,
-                backgroundEnvironment, clothes, clothesColor, angle
+                backgroundEnvironment, clothes, clothesColor, angle, cameraAngleImperfection
             ].some(val => val && val.trim() !== "") || exactFacialStructure || transformHead;
 
             if (hasAdvancedSettings) {
@@ -311,6 +313,8 @@ export default function FashionRandomizer() {
                             setTransformHead={setTransformHead}
                             angle={angle}
                             setAngle={setAngle}
+                            cameraAngleImperfection={cameraAngleImperfection}
+                            setCameraAngleImperfection={setCameraAngleImperfection}
                         />
 
                         {!prompts && (

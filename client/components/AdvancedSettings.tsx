@@ -148,12 +148,14 @@ export interface AdvancedSettingsProps {
     pose?: string;
     setPose?: (value: string) => void;
     // Fashion Settings
-    fashionStyle: string;
-    setFashionStyle: (value: string) => void;
-    clothes: string;
-    setClothes: (value: string) => void;
-    clothesColor: string;
-    setClothesColor: (value: string) => void;
+    fashionStyle?: string;
+    setFashionStyle?: (value: string) => void;
+    clothes?: string;
+    setClothes?: (value: string) => void;
+    clothesColor?: string;
+    setClothesColor?: (value: string) => void;
+    cameraAngleImperfection?: string;
+    setCameraAngleImperfection?: (value: string) => void;
 }
 
 export default function AdvancedSettings({
@@ -196,6 +198,8 @@ export default function AdvancedSettings({
     setClothes,
     clothesColor,
     setClothesColor,
+    cameraAngleImperfection,
+    setCameraAngleImperfection,
 }: AdvancedSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
@@ -465,6 +469,21 @@ export default function AdvancedSettings({
                                     </Select>
                                 </div>
                             )}
+
+                            <div className="space-y-2 sm:col-span-2 border-t pt-4">
+                                <Label className="text-sm font-bold text-foreground/80 uppercase tracking-wider block mb-2">Camera Angle Imperfections</Label>
+                                <Select value={cameraAngleImperfection} onValueChange={setCameraAngleImperfection}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Imperfection" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Slightly noticeable tilt (6° roll)">Slightly noticeable tilt (6° roll)</SelectItem>
+                                        <SelectItem value="Moderate tilt (8° roll)">Moderate tilt (8° roll)</SelectItem>
+                                        <SelectItem value="Strong tilt (10° roll)">Strong tilt (10° roll)</SelectItem>
+                                        <SelectItem value="Pronounced tilt (12° roll)">Pronounced tilt (12° roll)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             <div className="space-y-2 sm:col-span-2">
                                 <Label htmlFor="bodyComposition">Body Composition</Label>

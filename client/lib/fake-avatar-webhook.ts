@@ -35,13 +35,36 @@ async function normalizeToPrompts(data: unknown): Promise<string[]> {
             let faceStr = "";
 
             analysis.forEach((item: any) => {
-                if (item?.scene) sceneStr = item.scene;
-                if (item?.scene_analysis) sceneStr = item.scene_analysis;
-                if (item?.face_analysis) faceStr = item.face_analysis;
+                // Determine if this item is face or scene analysis
+
+                // Potential Scene Analysis keys
+                let sceneText = item?.scene || item?.scene_analysis || item?.content?.parts?.[0]?.text;
+                if (sceneText) {
+                    if (typeof sceneText !== 'string') sceneText = JSON.stringify(sceneText, null, 2);
+
+                    if (sceneText.includes('photograph:') || sceneText.includes('background:')) {
+                        sceneStr = sceneText;
+                    } else if (!sceneStr) {
+                        // Fallback for scene analysis if it doesn't match specific patterns but we found something
+                        sceneStr = sceneText;
+                    }
+                }
+
+                // Potential Face Analysis keys
+                let faceText = item?.face_analysis || item?.analysis_text || (item?.content?.parts?.[0]?.text && item.content.parts[0].text.includes('face_analysis') ? item.content.parts[0].text : null);
+                if (faceText) {
+                    if (typeof faceText !== 'string') faceText = JSON.stringify(faceText, null, 2);
+                    faceStr = faceText;
+                }
             });
 
-            // Return [face, scene] so Face is top, Scene is bottom in combined view
-            return [faceStr, sceneStr].filter(Boolean);
+            console.log("[normalizeToPrompts] Extracted from ANALYSIS - Face:", !!faceStr, "Scene:", !!sceneStr);
+
+            // Return both. We keep the order [Face, Scene] to match the UI labels in FakeAvatarGenerator.tsx
+            const result = [];
+            if (faceStr) result.push(faceStr);
+            if (sceneStr) result.push(sceneStr);
+            return result;
         }
 
         const prompts = (data as any[])
@@ -62,6 +85,14 @@ async function normalizeToPrompts(data: unknown): Promise<string[]> {
                 if (typeof it === "string") {
                     console.log(`[normalizeToPrompts] Found string at index ${index}`);
                     return it;
+                }
+                if (it?.face_analysis) {
+                    console.log(`[normalizeToPrompts] Found face_analysis at index ${index}`);
+                    return it.face_analysis;
+                }
+                if (it?.analysis_text) {
+                    console.log(`[normalizeToPrompts] Found analysis_text at index ${index}`);
+                    return it.analysis_text;
                 }
                 console.warn(`[normalizeToPrompts] No prompt found at index ${index}`, it);
                 return null;
@@ -129,6 +160,7 @@ export async function handleFakeAvatarSubmission(
         ears?: string;
         transformHead?: boolean;
         angle?: string;
+        cameraAngleImperfection?: string;
         backgroundEnvironment?: string;
         pose?: string;
         fashionStyle?: string;
@@ -159,6 +191,7 @@ export async function handleFakeAvatarSubmission(
     if (opts?.clothesColor) formData.append("clothesColor", opts.clothesColor);
     if (opts?.transformHead) formData.append("transformHead", String(opts.transformHead));
     if (opts?.angle) formData.append("angle", opts.angle);
+    if (opts?.cameraAngleImperfection) formData.append("cameraAngleImperfection", opts.cameraAngleImperfection);
     if (opts?.backgroundEnvironment) formData.append("backgroundEnvironment", opts.backgroundEnvironment);
     if (opts?.pose) formData.append("pose", opts.pose);
 
@@ -189,6 +222,7 @@ export async function handleFakeAvatarSubmission(
         opts?.ears,
         opts?.transformHead ? "true" : "",
         opts?.angle,
+        opts?.cameraAngleImperfection,
         opts?.backgroundEnvironment,
         opts?.fashionStyle,
         opts?.clothes,
