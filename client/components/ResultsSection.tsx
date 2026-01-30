@@ -120,8 +120,8 @@ export default function ResultsSection({
       combinedParts = combinedParts.concat(analysisPrompts);
     }
 
-    // Add the selected variant prompt if it exists (only if it's not already in analysis - though usually they are separate)
-    if (variantPrompt) {
+    // Add the selected variant prompt if it exists (only if it's not already in analysis)
+    if (variantPrompt && selectedFashionPromptIndex >= analysisCount) {
       combinedParts.push(variantPrompt);
     }
 
@@ -133,7 +133,16 @@ export default function ResultsSection({
       }
     }
 
-    let result = combinedParts.join("\n\n");
+    // Deduplicate strings to prevent any double-counting (especially common in B-roll tools)
+    const uniqueParts = combinedParts.reduce((acc: string[], current: string) => {
+      const trimmed = current.trim();
+      if (trimmed && !acc.some(p => p.trim() === trimmed)) {
+        acc.push(trimmed);
+      }
+      return acc;
+    }, []);
+
+    let result = uniqueParts.join("\n\n");
 
     // Always add the footer if it exists
     if (combinedPromptFooter) {
