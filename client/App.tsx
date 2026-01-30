@@ -27,6 +27,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Kling from "./pages/Kling";
 import FashionRandomizer from "./pages/FashionRandomizer";
+import FakeAvatarGeneratorV2 from "./pages/FakeAvatarGeneratorV2";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/body-analyzer" element={<BodyAnalyzer />} />
               <Route path="/kling" element={<Kling />} />
               <Route path="/fashion-randomizer" element={<FashionRandomizer />} />
+              <Route path="/fake-avatar-generator-v2" element={<FakeAvatarGeneratorV2 />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -40,6 +40,8 @@ interface ResultsSectionProps {
   onRegenerate?: () => void;
   isLoading?: boolean;
   hideAnalysis?: boolean;
+  hideVariations?: boolean;
+  hideMasterRandomize?: boolean;
 }
 
 function download(filename: string, content: string, type: string) {
@@ -69,7 +71,9 @@ export default function ResultsSection({
   onGenerateKlingVideo,
   onRegenerate,
   isLoading: isRegenerating,
-  hideAnalysis = false
+  hideAnalysis = false,
+  hideVariations = false,
+  hideMasterRandomize = false
 }: ResultsSectionProps) {
   const hasPrompts = (prompts && prompts.length > 0);
   const showSection = hasPrompts || isFetchingFaceProfile || isFetchingBodyProfile;
@@ -338,7 +342,7 @@ export default function ResultsSection({
             )}
 
             {/* Variations Grid */}
-            {hasPrompts && prompts!.length > 2 && (
+            {hasPrompts && prompts!.length > 2 && !hideVariations && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
@@ -377,7 +381,7 @@ export default function ResultsSection({
                     key="combined"
                     title="Master Photography Prompt"
                     prompt={combinedPromptContent}
-                    showRandomizeButton={true}
+                    showRandomizeButton={!hideMasterRandomize}
                     onRandomize={handleRandomizeCombinedPrompt}
                     isRandomizing={isRandomizingCombined}
                     isMaster={true}
