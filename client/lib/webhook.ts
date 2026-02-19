@@ -1,5 +1,5 @@
 const DEFAULT_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/baseimagetoprompt";
+  "https://n8n.heysnaply.com/webhook/baseimagetoprompt";
 export const WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_WEBHOOK_URL as string | undefined) ||
   DEFAULT_WEBHOOK_URL;
