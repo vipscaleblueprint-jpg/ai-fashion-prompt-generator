@@ -1,5 +1,5 @@
 const DEFAULT_KLING_WEBHOOK_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/kling-prompt-generator";
+    "https://n8n.heysnaply.com/webhook/kling-prompt-generator";
 export const KLING_WEBHOOK_URL: string =
     ((import.meta as any)?.env?.VITE_KLING_WEBHOOK_URL as string | undefined) ||
     DEFAULT_KLING_WEBHOOK_URL;

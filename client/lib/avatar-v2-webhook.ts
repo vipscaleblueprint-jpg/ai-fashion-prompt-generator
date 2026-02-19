@@ -1,4 +1,4 @@
-const WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/avatar-generator";
+const WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/avatar-generator";
 
 export interface AvatarV2Request {
     gender: string;

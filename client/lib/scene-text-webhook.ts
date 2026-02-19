@@ -1,5 +1,5 @@
 const DEFAULT_SCENE_TEXT_WEBHOOK_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/scene-image-to-prompt";
+    "https://n8n.heysnaply.com/webhook/scene-image-to-prompt";
 
 export const SCENE_TEXT_WEBHOOK_URL: string =
     ((import.meta as any)?.env?.VITE_SCENE_TEXT_WEBHOOK_URL as string | undefined) ||

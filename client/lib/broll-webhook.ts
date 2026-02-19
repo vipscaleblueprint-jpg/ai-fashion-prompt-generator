@@ -1,10 +1,10 @@
 const DEFAULT_BROLL_WEBHOOK_URL =
-  "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts3";
+  "https://n8n.heysnaply.com/webhook/brolltoprompts3";
 export const BROLL_WEBHOOK_URL: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL as string | undefined) ||
   DEFAULT_BROLL_WEBHOOK_URL;
 
-const WEBHOOK_URL_2 = "https://n8n.srv1151765.hstgr.cloud/webhook/brolltoprompts";
+const WEBHOOK_URL_2 = "https://n8n.heysnaply.com/webhook/brolltoprompts";
 export const BROLL_WEBHOOK_URL_2: string =
   ((import.meta as any)?.env?.VITE_BROLL_WEBHOOK_URL_2 as string | undefined) ||
   WEBHOOK_URL_2;
@@ -430,7 +430,7 @@ export async function handleBrollImageSubmission2(
   return prompts;
 }
 
-export const FETCH_FACE_PROFILE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-faceprofile";
+export const FETCH_FACE_PROFILE_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/fetch-faceprofile";
 
 export async function fetchFaceProfile(clientName: string): Promise<string | null> {
   try {
@@ -461,7 +461,7 @@ export async function fetchFaceProfile(clientName: string): Promise<string | nul
   }
 }
 
-export const SEARCH_IMAGE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-data";
+export const SEARCH_IMAGE_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/fetch-data";
 
 export async function searchImage(query: string): Promise<string[]> {
   try {
@@ -541,7 +541,7 @@ export async function searchImage(query: string): Promise<string[]> {
   }
 }
 
-export const FETCH_BODY_PROFILE_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-bodyprofile";
+export const FETCH_BODY_PROFILE_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/fetch-bodyprofile";
 
 export async function fetchBodyProfile(clientName: string): Promise<string | null> {
   try {

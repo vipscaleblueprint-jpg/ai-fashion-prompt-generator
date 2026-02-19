@@ -1,4 +1,4 @@
-export const MARKETING_CLIENT_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/marketing-clients";
+export const MARKETING_CLIENT_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/marketing-clients";
 
 export type MarketingClient = {
     client_name: string;

@@ -1,4 +1,4 @@
-const BROLL3_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/upload-broll";
+const BROLL3_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/upload-broll";
 
 export interface Broll3WebhookResponse {
     success?: boolean;

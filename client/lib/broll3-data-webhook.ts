@@ -9,7 +9,7 @@ export interface BrollDataResponse {
     [key: string]: any;
 }
 
-const DATA_WEBHOOK_URL = "https://n8n.srv1151765.hstgr.cloud/webhook/fetch-data";
+const DATA_WEBHOOK_URL = "https://n8n.heysnaply.com/webhook/fetch-data";
 
 export async function fetchBrollData(imageUrl?: string): Promise<BrollDataResponse | BrollDataResponse[]> {
     try {

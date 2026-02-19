@@ -1,5 +1,5 @@
 const DEFAULT_GENERATE_IMAGE_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/generateimage";
+    "https://n8n.heysnaply.com/webhook/generateimage";
 export const GENERATE_IMAGE_URL: string =
     ((import.meta as any)?.env?.VITE_GENERATE_IMAGE_URL as string | undefined) ||
     DEFAULT_GENERATE_IMAGE_URL;

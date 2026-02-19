@@ -1,14 +1,14 @@
 export const MARKETING_CLIENTS_WEBHOOK_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/marketing-clients";
+    "https://n8n.heysnaply.com/webhook/marketing-clients";
 
 const DEFAULT_SUBMISSION_WEBHOOK_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/face-analyzer";
+    "https://n8n.heysnaply.com/webhook/face-analyzer";
 export const FACE_ANALYZER_WEBHOOK_URL: string =
     ((import.meta as any)?.env?.VITE_FACE_ANALYZER_WEBHOOK_URL as string | undefined) ||
     DEFAULT_SUBMISSION_WEBHOOK_URL;
 
 export const APPEND_SHEET_WEBHOOK_URL =
-    "https://n8n.srv1151765.hstgr.cloud/webhook/append-sheet";
+    "https://n8n.heysnaply.com/webhook/append-sheet";
 
 type LegacyWebhookPromptItem = { prompt: string };
 type LegacyWebhookResponse = { input: LegacyWebhookPromptItem[] };
